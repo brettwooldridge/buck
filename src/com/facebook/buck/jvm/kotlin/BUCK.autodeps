@@ -2,7 +2,9 @@
   "kotlin" : {
     "deps" : [
       "//src/com/facebook/buck/io:executable-finder",
-      "//src/com/facebook/buck/jvm/common:common"
+      "//src/com/facebook/buck/jvm/common:common",
+      "//src/com/facebook/buck/log:api",
+      "//src/com/facebook/buck/util:exceptions"
     ],
     "exported_deps" : [
       "//src/com/facebook/buck/cli:config",
@@ -17,7 +19,8 @@
       "//src/com/facebook/buck/shell:steps",
       "//src/com/facebook/buck/step:step",
       "//third-party/java/guava:guava",
-      "//third-party/java/infer-annotations:infer-annotations"
+      "//third-party/java/infer-annotations:infer-annotations",
+      "//third-party/java/jsr:jsr305"
     ]
   }
 }

@@ -18,22 +18,24 @@ public class KotlinFileParser {
          .put("1", "1.0")
          .build();
 
-      private KotlinFileParser(int klsLevel, String kotlinVersion) {
+  private KotlinFileParser(int klsLevel, String kotlinVersion) {
     this.klsLevel = klsLevel;
     this.kotlinVersion = kotlinVersion;
   }
 
   public static KotlinFileParser createKotlinFileParser(KotlinOptions options) {
     String kotlinVersion = Preconditions.checkNotNull(kotlinVersionMap.get(options.getSourceLevel()));
-    return new KotlinFileParser(1, kotlinVersion);
+    KotlinFileParser kotlinFileParser = new KotlinFileParser(1, kotlinVersion);
+    LOG.debug("KotlinFileParser created (language level %d, version %s.", kotlinFileParser.klsLevel, kotlinFileParser.kotlinVersion);
+    return kotlinFileParser;
   }
 
-  private static enum DependencyType {
-    REQUIRED,
-    EXPORTED,
-  }
+//  private static enum DependencyType {
+//    REQUIRED,
+//    EXPORTED,
+//  }
 
-  public KotlinFileFeatures extractFeaturesFromKotlinCode(String code) {
+  public KotlinFileFeatures extractFeaturesFromKotlinCode(/*String code*/) {
 
 
     return new KotlinFileFeatures();
