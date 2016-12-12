@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="**/BUCK|**/BUCK.autodeps|com/facebook/buck/android/support/|com/facebook/buck/cli/quickstart/**|com/facebook/buck/intellij/" kind="src" path="src"/>
+	<classpathentry kind="src" path="build/gen"/>
 	<classpathentry excluding="**/BUCK" kind="src" path="third-party/java/aosp/src"/>
 	<classpathentry kind="src" path="src-gen"/>
 	<classpathentry excluding="**/BUCK|**/testdata/**|com/facebook/buck/event/listener/noos/" kind="src" path="test"/>
@@ -38,11 +39,6 @@
 	<classpathentry kind="lib" path="third-party/java/immutables/value-2.3.8.jar"/>
 	<classpathentry kind="lib" path="third-party/java/infer-annotations/infer-annotations-1.5.jar"/>
 	<classpathentry kind="lib" path="third-party/java/ini4j/ini4j-0.5.2.jar"/>
-	<classpathentry kind="lib" path="third-party/java/jackson/jackson-annotations-2.5.5.jar"/>
-	<classpathentry kind="lib" path="third-party/java/jackson/jackson-core-2.5.5.jar"/>
-	<classpathentry kind="lib" path="third-party/java/jackson/jackson-databind-2.5.5.jar"/>
-	<classpathentry kind="lib" path="third-party/java/jackson/jackson-datatype-jdk7-2.5.0.jar"/>
-	<classpathentry kind="lib" path="third-party/java/jackson-datatype-guava/jackson-datatype-guava-2.5.5.jar"/>
 	<classpathentry kind="lib" path="third-party/java/jacoco/org.jacoco.core-0.7.7.201606060606.jar"/>
 	<classpathentry kind="lib" path="third-party/java/jacoco/org.jacoco.report-0.7.7.201606060606.jar"/>
 	<classpathentry kind="lib" path="third-party/java/jetty/jetty-all-9.2.10.v20150310.jar"/>
@@ -62,7 +58,6 @@
 	<classpathentry kind="lib" path="third-party/java/servlet-api/javax.servlet-api-3.1.0.jar"/>
 	<classpathentry kind="lib" path="third-party/java/stringtemplate/ST-4.0.8.jar"/>
 	<classpathentry kind="lib" path="third-party/java/testng/testng-6.8.jar"/>
-	<classpathentry kind="lib" path="third-party/java/xz-java-1.5/xz-1.3.jar" sourcepath="third-party/java/xz-java-1.5/xz-1.3-sources.jar"/>
 	<classpathentry kind="src" path="third-party/java/dx/src"/>
 	<classpathentry kind="lib" path="third-party/java/caliper/caliper-1.0-all.jar"/>
 	<classpathentry kind="lib" path="third-party/java/jdk/stub-compiler-tree-api.jar"/>
@@ -89,5 +84,12 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-annotations-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-core-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-databind-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-datatype-guava-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-datatype-jdk8-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/jackson/jackson-module-mrbean-2.7.8.jar"/>
+	<classpathentry kind="lib" path="third-party/java/xz-java-1.5/xz-1.5.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

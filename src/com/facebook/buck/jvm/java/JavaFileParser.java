@@ -98,7 +98,7 @@ public class JavaFileParser {
    * Current as of Java 8:
    * https://docs.oracle.com/javase/8/docs/api/java/lang/package-summary.html
    */
-  private static final Set<String> JAVA_LANG_TYPES = ImmutableSet.of(
+  public static final Set<String> JAVA_LANG_TYPES = ImmutableSet.of(
       // Interface
       "Appendable",
       "AutoCloseable",
@@ -225,7 +225,7 @@ public class JavaFileParser {
    *     | sort
    * </pre>
    */
-  private static final ImmutableSet<String> JAVA_IO_TYPES = ImmutableSet.of(
+  public static final ImmutableSet<String> JAVA_IO_TYPES = ImmutableSet.of(
       "Bits",
       "BufferedInputStream",
       "BufferedOutputStream",
@@ -325,7 +325,7 @@ public class JavaFileParser {
    *     | sort
    * </pre>
    */
-  private static final ImmutableSet<String> JAVA_UTIL_TYPES = ImmutableSet.of(
+  public static final ImmutableSet<String> JAVA_UTIL_TYPES = ImmutableSet.of(
       "AbstractCollection",
       "AbstractList",
       "AbstractMap",
@@ -444,7 +444,7 @@ public class JavaFileParser {
       "WeakHashMap"
   );
 
-  private static final ImmutableMap<String, ImmutableSet<String>> SUPPORTED_WILDCARD_IMPORTS =
+  public static final ImmutableMap<String, ImmutableSet<String>> SUPPORTED_WILDCARD_IMPORTS =
       ImmutableMap.of(
           "java.util", JAVA_UTIL_TYPES,
           "java.io", JAVA_IO_TYPES);

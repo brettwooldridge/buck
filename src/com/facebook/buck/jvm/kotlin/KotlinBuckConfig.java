@@ -16,15 +16,17 @@
 
 package com.facebook.buck.jvm.kotlin;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.facebook.buck.cli.BuckConfig;
 import com.facebook.buck.io.ExecutableFinder;
 import com.facebook.buck.rules.HashedFileTool;
 import com.facebook.buck.rules.Tool;
+import com.facebook.buck.util.HumanReadableException;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class KotlinBuckConfig {
   private static final Path DEFAULT_KOTLIN_COMPILER = Paths.get("kotlinc");
@@ -41,5 +43,21 @@ public class KotlinBuckConfig {
     Path compiler = new ExecutableFinder().getExecutable(compilerPath, delegate.getEnvironment());
 
     return Suppliers.ofInstance(new HashedFileTool(compiler));
+  }
+
+  public Path getKotlinHome() {
+    Path compilerPath = delegate.getPath("kotlin", "compiler").orElse(DEFAULT_KOTLIN_COMPILER);
+    Path compiler = new ExecutableFinder().getExecutable(compilerPath, delegate.getEnvironment());
+    try {
+      Path kotlinHome = compiler.toRealPath().getParent();
+      return kotlinHome;
+    } catch (IOException e) {
+      throw new HumanReadableException("Could not find resolve compiler jar location from " + compiler.toAbsolutePath() + "."); 
+    }
+  }
+
+  public Path getPathToCompilerJar() {
+    Path kotlinHome = getKotlinHome();
+    return kotlinHome.resolve("/lib/kotlin-compiler.jar");
   }
 }
