@@ -57,7 +57,6 @@ public class KotlinBuckConfig {
   }
 
   public Path getPathToCompilerJar() {
-    Path kotlinHome = getKotlinHome();
-    return kotlinHome.resolve("/lib/kotlin-compiler.jar");
+    return getKotlinHome().resolve(Paths.get("lib", "kotlin-compiler.jar"));
   }
 }
