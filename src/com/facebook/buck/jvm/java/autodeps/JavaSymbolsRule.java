@@ -46,41 +46,45 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 
-final class JavaSymbolsRule implements BuildRule, InitializableFromDisk<Symbols> {
+public class JavaSymbolsRule implements BuildRule, InitializableFromDisk<Symbols> {
 
-  interface SymbolsFinder extends RuleKeyAppendable {
+  public interface SymbolsFinder extends RuleKeyAppendable {
     Symbols extractSymbols() throws IOException;
   }
 
   private static final String TYPE = "java_symbols";
   public static final Flavor JAVA_SYMBOLS = ImmutableFlavor.of(TYPE);
 
-  private final BuildTarget buildTarget;
+  protected final BuildTarget buildTarget;
 
   @AddToRuleKey
-  private final SymbolsFinder symbolsFinder;
+  protected final SymbolsFinder symbolsFinder;
 
   @AddToRuleKey
-  private final ImmutableSortedSet<String> generatedSymbols;
+  protected final ImmutableSortedSet<String> generatedSymbols;
 
-  private final ObjectMapper objectMapper;
-  private final ProjectFilesystem projectFilesystem;
-  private final Path outputPath;
-  private final BuildOutputInitializer<Symbols> outputInitializer;
+  protected final ObjectMapper objectMapper;
+  protected final ProjectFilesystem projectFilesystem;
+  protected final Path outputPath;
+  protected final BuildOutputInitializer<Symbols> outputInitializer;
 
-  JavaSymbolsRule(
+  protected JavaSymbolsRule(
       BuildTarget javaLibraryBuildTarget,
       SymbolsFinder symbolsFinder,
       ImmutableSortedSet<String> generatedSymbols,
       ObjectMapper objectMapper,
       ProjectFilesystem projectFilesystem) {
-    this.buildTarget = javaLibraryBuildTarget.withFlavors(JAVA_SYMBOLS);
+    this.buildTarget = getFlavoredBuildTarget(javaLibraryBuildTarget);
     this.symbolsFinder = symbolsFinder;
     this.generatedSymbols = generatedSymbols;
     this.objectMapper = objectMapper;
     this.projectFilesystem = projectFilesystem;
     this.outputPath = BuildTargets.getGenPath(getProjectFilesystem(), buildTarget, "__%s__.json");
     this.outputInitializer = new BuildOutputInitializer<>(buildTarget, this);
+  }
+
+  protected BuildTarget getFlavoredBuildTarget(BuildTarget buildTarget) {
+    return buildTarget.withFlavors(JAVA_SYMBOLS);
   }
 
   public Symbols getFeatures() {
@@ -104,7 +108,7 @@ final class JavaSymbolsRule implements BuildRule, InitializableFromDisk<Symbols>
   public ImmutableList<Step> getBuildSteps(
       BuildContext context, BuildableContext buildableContext) {
     Step mkdirStep = new MkdirStep(getProjectFilesystem(), getPathToOutput().getParent());
-    Step extractSymbolsStep = new AbstractExecutionStep("java-symbols") {
+    Step extractSymbolsStep = new AbstractExecutionStep(getType()) {
       @Override
       public StepExecutionResult execute(ExecutionContext context) throws IOException {
         Symbols symbols = symbolsFinder.extractSymbols();

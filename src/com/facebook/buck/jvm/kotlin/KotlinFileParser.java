@@ -6,6 +6,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 
+/**
+ * Extracts the set of exported symbols (class and enum names) from a Kotlin code file, using the
+ * Parser from the Kotlin compiler.
+ */
 public class KotlinFileParser {
 
   private static final Logger LOG = Logger.get(JavaFileParser.class);
@@ -35,7 +39,7 @@ public class KotlinFileParser {
 //    EXPORTED,
 //  }
 
-  public KotlinFileFeatures extractFeaturesFromKotlinCode(/*String code*/) {
+  public KotlinFileFeatures extractFeaturesFromKotlinCode(String code) {
 
 
     return new KotlinFileFeatures();

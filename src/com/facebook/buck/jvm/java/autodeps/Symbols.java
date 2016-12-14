@@ -24,27 +24,27 @@ import com.google.common.collect.ImmutableList;
  * Lightweight class that is used to pass some collections around, avoiding unnecessary copying.
  */
 @JsonSerialize
-final class Symbols {
+public final class Symbols {
   static final Symbols EMPTY = new Symbols();
 
   @JsonSerialize
   @JsonDeserialize
-  final Iterable<String> provided;
+  public final Iterable<String> provided;
   @JsonSerialize
   @JsonDeserialize
-  final Iterable<String> required;
+  public final Iterable<String> required;
   @JsonSerialize
   @JsonDeserialize
-  final Iterable<String> exported;
+  public final Iterable<String> exported;
 
   // For JsonDeserialize.
-  Symbols() {
+  public Symbols() {
     this.provided = ImmutableList.of();
     this.required = ImmutableList.of();
     this.exported = ImmutableList.of();
   }
 
-  Symbols(Iterable<String> provided, Iterable<String> required, Iterable<String> exported) {
+  public Symbols(Iterable<String> provided, Iterable<String> required, Iterable<String> exported) {
     this.provided = provided;
     this.required = required;
     this.exported = exported;
