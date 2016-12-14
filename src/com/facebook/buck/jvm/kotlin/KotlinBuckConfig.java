@@ -50,6 +50,9 @@ public class KotlinBuckConfig {
     Path compiler = new ExecutableFinder().getExecutable(compilerPath, delegate.getEnvironment());
     try {
       Path kotlinHome = compiler.toRealPath().getParent();
+      if (kotlinHome != null && kotlinHome.endsWith(Paths.get("bin"))) {
+        kotlinHome = kotlinHome.getParent();
+      }
       return kotlinHome;
     } catch (IOException e) {
       throw new HumanReadableException("Could not find resolve compiler jar location from " + compiler.toAbsolutePath() + "."); 
@@ -58,5 +61,9 @@ public class KotlinBuckConfig {
 
   public Path getPathToCompilerJar() {
     return getKotlinHome().resolve(Paths.get("lib", "kotlin-compiler.jar"));
+  }
+
+  public Path getPathToRuntimeJar() {
+    return getKotlinHome().resolve(Paths.get("lib", "kotlin-runtime.jar"));
   }
 }
