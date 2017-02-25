@@ -16,7 +16,6 @@
 
 package com.facebook.buck.jvm.kotlin;
 
-import com.facebook.buck.jvm.java.DefaultJavaLibrary;
 import com.facebook.buck.jvm.java.HasJavaAbi;
 import com.facebook.buck.jvm.java.JavaLibrary;
 import com.facebook.buck.jvm.java.JavaLibraryDescription;
@@ -43,13 +42,14 @@ import com.google.common.collect.ImmutableSortedSet;
 public class KotlinLibraryDescription implements
     Description<KotlinLibraryDescription.Arg>, Flavored {
 
-  private final KotlinBuckConfig kotlinBuckConfig;
-
-  public static final ImmutableSet<Flavor> SUPPORTED_FLAVORS = ImmutableSet.of(
+  private static final ImmutableSet<Flavor> SUPPORTED_FLAVORS = ImmutableSet.of(
       JavaLibrary.SRC_JAR,
       JavaLibrary.MAVEN_JAR);
 
-  public KotlinLibraryDescription(KotlinBuckConfig kotlinBuckConfig) {
+  private final KotlinBuckConfig kotlinBuckConfig;
+
+  public KotlinLibraryDescription(
+      KotlinBuckConfig kotlinBuckConfig) {
     this.kotlinBuckConfig = kotlinBuckConfig;
   }
 
@@ -103,7 +103,6 @@ public class KotlinLibraryDescription implements
       }
     }
 
-
     DefaultKotlinLibraryBuilder defaultKotlinLibraryBuilder = new DefaultKotlinLibraryBuilder(
         params,
         resolver,
@@ -116,7 +115,7 @@ public class KotlinLibraryDescription implements
       return defaultKotlinLibraryBuilder.buildAbi();
     }
 
-    DefaultJavaLibrary defaultKotlinLibrary = defaultKotlinLibraryBuilder.build();
+    DefaultKotlinLibrary defaultKotlinLibrary = (DefaultKotlinLibrary) defaultKotlinLibraryBuilder.build();
 
     if (!flavors.contains(JavaLibrary.MAVEN_JAR)) {
       return defaultKotlinLibrary;
@@ -129,9 +128,8 @@ public class KotlinLibraryDescription implements
     }
   }
 
-
   @SuppressFieldNotInitialized
   public static class Arg extends JavaLibraryDescription.Arg {
-    public ImmutableList<String> extraKotlincArguments = ImmutableList.of();
+    ImmutableList<String> extraKotlincArguments = ImmutableList.of();
   }
 }

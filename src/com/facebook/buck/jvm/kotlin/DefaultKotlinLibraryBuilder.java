@@ -17,8 +17,10 @@
 package com.facebook.buck.jvm.kotlin;
 
 import com.facebook.buck.jvm.java.CompileToJarStepFactory;
+import com.facebook.buck.jvm.java.DefaultJavaLibrary;
 import com.facebook.buck.jvm.java.DefaultJavaLibraryBuilder;
 import com.facebook.buck.jvm.java.JavaLibraryDescription;
+import com.facebook.buck.parser.NoSuchBuildTargetException;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.google.common.base.Preconditions;
@@ -53,9 +55,35 @@ public class DefaultKotlinLibraryBuilder extends DefaultJavaLibraryBuilder {
 
   protected class BuilderHelper extends DefaultJavaLibraryBuilder.BuilderHelper {
     @Override
+    protected DefaultJavaLibrary build() throws NoSuchBuildTargetException {
+      return new DefaultKotlinLibrary(
+              getFinalParams(),
+              sourcePathResolver,
+              ruleFinder,
+              srcs,
+              resources,
+              generatedSourceFolder,
+              proguardConfig,
+              postprocessClassesCommands,
+              getFinalFullJarDeclaredDeps(),
+              fullJarExportedDeps,
+              fullJarProvidedDeps,
+              getFinalCompileTimeClasspathDeps(),
+              getAbiInputs(),
+              getAbiJar(),
+              trackClassUsage,
+              getCompileStepFactory(),
+              resourcesRoot,
+              manifestFile,
+              mavenCoords,
+              tests,
+              classesToRemoveFromJar);
+    }
+
+    @Override
     protected CompileToJarStepFactory buildCompileStepFactory() {
       return new KotlincToJarStepFactory(
-          Preconditions.checkNotNull(kotlinBuckConfig).getKotlinCompiler().get(),
+          Preconditions.checkNotNull(kotlinBuckConfig).getKotlinc(),
           extraKotlincArguments);
     }
   }

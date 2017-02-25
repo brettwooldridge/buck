@@ -36,18 +36,18 @@ import java.util.Optional;
 
 public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
 
-  private final Tool kotlinc;
+  private final Kotlinc kotlinc;
   private final ImmutableList<String> extraArguments;
   private final Function<BuildContext, Iterable<Path>> extraClassPath;
 
   public KotlincToJarStepFactory(
-      Tool kotlinc,
+      Kotlinc kotlinc,
       ImmutableList<String> extraArguments) {
     this(kotlinc, extraArguments, EMPTY_EXTRA_CLASSPATH);
   }
 
   public KotlincToJarStepFactory(
-      Tool kotlinc,
+      Kotlinc kotlinc,
       ImmutableList<String> extraArguments,
       Function<BuildContext, Iterable<Path>> extraClassPath) {
     this.kotlinc = kotlinc;
@@ -57,7 +57,7 @@ public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
 
   @Override
   public void createCompileStep(
-      BuildContext context,
+      BuildContext buildContext,
       ImmutableSortedSet<Path> sourceFilePaths,
       BuildTarget invokingRule,
       SourcePathResolver resolver,
@@ -71,16 +71,23 @@ public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
       /* out params */
       ImmutableList.Builder<Step> steps,
       BuildableContext buildableContext) {
+
+
     steps.add(
         new KotlincStep(
+            buildContext,
+            invokingRule,
+            outputDirectory,
+            sourceFilePaths,
+            pathToSrcsList,
+            declaredClasspathEntries,
             kotlinc,
             extraArguments,
             resolver,
-            outputDirectory,
-            sourceFilePaths,
+            ruleFinder,
             ImmutableSortedSet.<Path>naturalOrder()
                 .addAll(
-                    Optional.ofNullable(extraClassPath.apply(context)).orElse(ImmutableList.of()))
+                    Optional.ofNullable(extraClassPath.apply(buildContext)).orElse(ImmutableList.of()))
                 .addAll(declaredClasspathEntries)
                 .build(),
             filesystem));
@@ -88,7 +95,7 @@ public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
 
   @Override
   public void appendToRuleKey(RuleKeyObjectSink sink) {
-    kotlinc.appendToRuleKey(sink);
+    // kotlinc.appendToRuleKey(sink);
     sink.setReflectively("extraArguments", extraArguments);
   }
 
