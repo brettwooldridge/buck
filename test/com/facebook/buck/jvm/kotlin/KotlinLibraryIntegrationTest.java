@@ -42,6 +42,7 @@ public class KotlinLibraryIntegrationTest {
 
   @Test
   public void shouldCompileKotlinClass() throws Exception {
+    KotlinTestAssumptions.assumeCompilerAvailable();
     ProjectWorkspace.ProcessResult buildResult =
         workspace.runBuckCommand("build", "//com/example/good:example");
     buildResult.assertSuccess("Build should have succeeded.");
@@ -49,6 +50,7 @@ public class KotlinLibraryIntegrationTest {
 
   @Test
   public void shouldCompileLibraryWithDependencyOnAnother() throws Exception {
+    KotlinTestAssumptions.assumeCompilerAvailable();
     ProjectWorkspace.ProcessResult buildResult =
         workspace.runBuckCommand("build", "//com/example/child:child");
     buildResult.assertSuccess("Build should have succeeded.");
@@ -56,6 +58,7 @@ public class KotlinLibraryIntegrationTest {
 
   @Test
   public void shouldFailToCompileInvalidKotlinCode() throws Exception {
+    KotlinTestAssumptions.assumeCompilerAvailable();
     ProjectWorkspace.ProcessResult buildResult =
         workspace.runBuckCommand("build", "//com/example/bad:fail");
     buildResult.assertFailure();

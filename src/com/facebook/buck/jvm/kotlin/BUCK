@@ -1,6 +1,21 @@
+java_immutables_library(
+  name = 'support',
+  srcs = [
+    'AbstractKotlincVersion.java',
+  ],
+  immutable_types = [
+    'KotlincVersion',
+  ],
+  autodeps = True,
+  visibility = ['PUBLIC'],
+)
+
 standard_java_library(
-    name = "kotlin",
-    tests = [
-        "//test/com/facebook/buck/jvm/kotlin:kotlin",
-    ],
+  name = "kotlin",
+  tests = [
+    '//test/com/facebook/buck/jvm/kotlin:kotlin',
+  ],
+  deps = [
+    ':support',
+  ],
 )

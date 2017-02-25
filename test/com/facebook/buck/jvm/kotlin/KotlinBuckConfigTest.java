@@ -38,6 +38,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
+@SuppressWarnings("unused")
 public class KotlinBuckConfigTest {
 
   @Rule
@@ -62,6 +63,8 @@ public class KotlinBuckConfigTest {
     MoreFiles.makeExecutable(kotlinCompiler);
 
     BuckConfig buckConfig = FakeBuckConfig.builder()
+      .setSections(
+          ImmutableMap.of("kotlin", ImmutableMap.of("external", "true")))
       .setEnvironment(
         ImmutableMap.of("PATH",
             kotlinPath.toString() + pathSeparator +
@@ -69,7 +72,7 @@ public class KotlinBuckConfigTest {
       .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    String command = kotlinBuckConfig.getKotlinCompiler().get().getCommandPrefix(null).get(0);
+    String command = kotlinBuckConfig.getCompilerPath().toString();
     assertEquals(command, kotlinCompiler.toString());
   }
 
@@ -80,12 +83,14 @@ public class KotlinBuckConfigTest {
     MoreFiles.makeExecutable(kotlinCompiler);
 
     BuckConfig buckConfig = FakeBuckConfig.builder()
+        .setSections(
+            ImmutableMap.of("kotlin", ImmutableMap.of("external", "true")))
         .setEnvironment(
           ImmutableMap.of("KOTLIN_HOME", workspace.getPath(".").normalize().toString()))
         .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    String command = kotlinBuckConfig.getKotlinCompiler().get().getCommandPrefix(null).get(0);
+    String command = kotlinBuckConfig.getCompilerPath().toString();
     assertEquals(command, kotlinCompiler.toString());
   }
 
@@ -98,12 +103,12 @@ public class KotlinBuckConfigTest {
 
     BuckConfig buckConfig = FakeBuckConfig.builder()
         .setSections(ImmutableMap.of(
-            "kotlin",
-            ImmutableMap.of("compiler", kotlinCompiler.toString())))
+            "kotlin", ImmutableMap.of("compiler", kotlinCompiler.toString(),
+                                      "external", "true")))
         .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    String command = kotlinBuckConfig.getKotlinCompiler().get().getCommandPrefix(null).get(0);
+    String command = kotlinBuckConfig.getCompilerPath().toString();
     assertEquals(command, kotlinCompiler.toString());
   }
 
@@ -117,11 +122,13 @@ public class KotlinBuckConfigTest {
     ProjectFilesystem filesystem = new ProjectFilesystem(workspace.resolve("."));
     BuckConfig buckConfig = FakeBuckConfig.builder()
         .setFilesystem(filesystem)
-        .setSections(ImmutableMap.of("kotlin", ImmutableMap.of("compiler", "bin/kotlinc")))
+        .setSections(ImmutableMap.of(
+            "kotlin", ImmutableMap.of("compiler", "bin/kotlinc",
+                                      "external", "true")))
         .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    String command = kotlinBuckConfig.getKotlinCompiler().get().getCommandPrefix(null).get(0);
+    String command = kotlinBuckConfig.getCompilerPath().toString();
     assertEquals(command, kotlinCompiler.toString());
   }
 
@@ -133,6 +140,8 @@ public class KotlinBuckConfigTest {
     MoreFiles.makeExecutable(kotlinCompiler);
 
     BuckConfig buckConfig = FakeBuckConfig.builder()
+      .setSections(
+          ImmutableMap.of("kotlin", ImmutableMap.of("external", "true")))
       .setEnvironment(
         ImmutableMap.of("PATH",
             kotlinPath.toString() + pathSeparator +
@@ -154,7 +163,8 @@ public class KotlinBuckConfigTest {
     BuckConfig buckConfig = FakeBuckConfig.builder()
         .setSections(ImmutableMap.of(
             "kotlin",
-            ImmutableMap.of("runtime_jar", kotlinRuntime.toString())))
+            ImmutableMap.of("runtime_jar", kotlinRuntime.toString(),
+                            "external", "true")))
         .setEnvironment(
             ImmutableMap.of("KOTLIN_HOME", workspace.getPath(".").normalize().toString()))
         .build();
@@ -173,7 +183,8 @@ public class KotlinBuckConfigTest {
         .setFilesystem(filesystem)
         .setSections(ImmutableMap.of(
             "kotlin",
-            ImmutableMap.of("runtime_jar", "lib/kotlin-runtime.jar")))
+            ImmutableMap.of("runtime_jar", "lib/kotlin-runtime.jar",
+                            "external", "true")))
         .setEnvironment(
             ImmutableMap.of("KOTLIN_HOME", workspace.getPath(".").normalize().toString()))
         .build();

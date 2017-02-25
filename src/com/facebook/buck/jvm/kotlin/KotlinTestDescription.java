@@ -24,14 +24,12 @@ import com.facebook.buck.jvm.java.JavaTest;
 import com.facebook.buck.jvm.java.JavacOptions;
 import com.facebook.buck.jvm.java.TestType;
 import com.facebook.buck.model.BuildTarget;
-import com.facebook.buck.model.Either;
 import com.facebook.buck.parser.NoSuchBuildTargetException;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.CellPathResolver;
 import com.facebook.buck.rules.Description;
-import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.rules.SourcePathRuleFinder;
 import com.facebook.buck.rules.TargetGraph;
@@ -40,10 +38,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -91,8 +87,9 @@ public class KotlinTestDescription implements Description<KotlinTestDescription.
 
     SourcePathResolver pathResolver = new SourcePathResolver(ruleFinder);
 
+    Kotlinc kotlinc = kotlinBuckConfig.getKotlinc();
     KotlincToJarStepFactory stepFactory = new KotlincToJarStepFactory(
-        kotlinBuckConfig.getKotlinCompiler().get(),
+        kotlinc,
         args.extraKotlincArguments);
 
     BuildRuleParams testsLibraryParams = stepFactory.addInputs(params, ruleFinder)
@@ -114,7 +111,7 @@ public class KotlinTestDescription implements Description<KotlinTestDescription.
             Suppliers.ofInstance(ImmutableSortedSet.of())),
         pathResolver,
         testsLibrary,
-        ImmutableSet.<Either<SourcePath, Path>>of(kotlinBuckConfig.getPathToRuntimeJar()),
+        kotlinBuckConfig.getPathToRuntimeJar(),
         args.labels,
         args.contacts,
         args.testType.orElse(TestType.JUNIT),

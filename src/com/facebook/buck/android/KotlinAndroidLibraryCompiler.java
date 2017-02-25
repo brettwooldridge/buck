@@ -43,8 +43,18 @@ public class KotlinAndroidLibraryCompiler extends AndroidLibraryCompiler {
       JavacOptions javacOptions,
       BuildRuleResolver resolver) {
     return new KotlincToJarStepFactory(
-        kotlinBuckConfig.getKotlinCompiler().get(),
+        kotlinBuckConfig.getKotlinc(),
         ImmutableList.of(),
         ANDROID_CLASSPATH_FROM_CONTEXT);
   }
+
+//  @Override
+//  public Iterable<BuildRule> getExtraDeps(
+//      AndroidLibraryDescription.Arg args,
+//      BuildRuleResolver resolver) {
+// TODO Brett Wooldridge
+//    return kotlinBuckConfig.getKotlinCompiler().get()
+//        .getDeps(new SourcePathRuleFinder(resolver));
+//      return ImmutableList.<BuildRule>of();
+//  }
 }

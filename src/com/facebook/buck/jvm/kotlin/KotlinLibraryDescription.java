@@ -16,13 +16,12 @@
 
 package com.facebook.buck.jvm.kotlin;
 
+import com.facebook.buck.jvm.common.ResourceValidator;
 import com.facebook.buck.jvm.java.CalculateAbi;
-import com.facebook.buck.jvm.java.DefaultJavaLibrary;
 import com.facebook.buck.jvm.java.JavaLibrary;
 import com.facebook.buck.jvm.java.JavaLibraryDescription;
-import com.facebook.buck.jvm.java.JavaSourceJar;
+import com.facebook.buck.jvm.java.JavaLibraryRules;
 import com.facebook.buck.jvm.java.MavenUberJar;
-import com.facebook.buck.maven.AetherUtil;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.model.Flavor;
 import com.facebook.buck.model.Flavored;
@@ -30,8 +29,11 @@ import com.facebook.buck.parser.NoSuchBuildTargetException;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
+import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.CellPathResolver;
 import com.facebook.buck.rules.Description;
+import com.facebook.buck.rules.SourcePath;
+import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.rules.SourcePathRuleFinder;
 import com.facebook.buck.rules.TargetGraph;
 import com.facebook.infer.annotation.SuppressFieldNotInitialized;
@@ -39,18 +41,23 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 
 public class KotlinLibraryDescription implements
     Description<KotlinLibraryDescription.Arg>, Flavored {
 
-  private final KotlinBuckConfig kotlinBuckConfig;
-
-  public static final ImmutableSet<Flavor> SUPPORTED_FLAVORS = ImmutableSet.of(
+  private static final ImmutableSet<Flavor> SUPPORTED_FLAVORS = ImmutableSet.of(
       JavaLibrary.SRC_JAR,
       JavaLibrary.MAVEN_JAR);
 
-  public KotlinLibraryDescription(KotlinBuckConfig kotlinBuckConfig) {
+  private final KotlinBuckConfig kotlinBuckConfig;
+
+  public KotlinLibraryDescription(
+      KotlinBuckConfig kotlinBuckConfig) {
     this.kotlinBuckConfig = kotlinBuckConfig;
   }
 
@@ -98,35 +105,68 @@ public class KotlinLibraryDescription implements
       params = params.withoutFlavor(JavaLibrary.MAVEN_JAR);
     }
 
-    if (flavors.contains(JavaLibrary.SRC_JAR)) {
-      args.mavenCoords = args.mavenCoords.map(input -> AetherUtil.addClassifier(
-          input,
-          AetherUtil.CLASSIFIER_SOURCES));
+//    if (flavors.contains(JavaLibrary.SRC_JAR)) {
+//      args.mavenCoords = args.mavenCoords.map(input -> AetherUtil.addClassifier(
+//          input,
+//          AetherUtil.CLASSIFIER_SOURCES));
+//
+//      if (!flavors.contains(JavaLibrary.MAVEN_JAR)) {
+//        return new JavaSourceJar(
+//            params,
+//            args.srcs,
+//            args.mavenCoords);
+//      } else {
+//        return MavenUberJar.SourceJar.create(
+//            Preconditions.checkNotNull(paramsWithMavenFlavor),
+//            args.srcs,
+//            args.mavenCoords,
+//            args.mavenPomTemplate);
+//      }
+//    }
 
-      if (!flavors.contains(JavaLibrary.MAVEN_JAR)) {
-        return new JavaSourceJar(
-            params,
+    SourcePathResolver pathResolver = new SourcePathResolver(ruleFinder);
+
+    ImmutableSortedSet<BuildRule> exportedDeps = resolver.getAllRules(args.exportedDeps);
+    BuildRuleParams javaLibraryParams =
+        params.copyAppendingExtraDeps(
+                BuildRules.getExportedRules(
+                    Iterables.concat(
+                        params.getDeclaredDeps().get(),
+                        exportedDeps,
+                        resolver.getAllRules(args.providedDeps))));
+//                ruleFinder.filterBuildRuleInputs(
+//                    javacOptions.getInputs(ruleFinder))));
+
+    ImmutableSortedSet<BuildRule> providedDeps = resolver.getAllRules(args.providedDeps);
+
+
+    Kotlinc kotlinc = kotlinBuckConfig.getKotlinc();
+    DefaultKotlinLibrary defaultKotlinLibrary =
+        new DefaultKotlinLibrary(
+            javaLibraryParams,
+            pathResolver,
+            ruleFinder,
             args.srcs,
-            args.mavenCoords);
-      } else {
-        return MavenUberJar.SourceJar.create(
-            Preconditions.checkNotNull(paramsWithMavenFlavor),
-            args.srcs,
+            ResourceValidator.validateResources(
+                pathResolver,
+                params.getProjectFilesystem(),
+                args.resources),
+            Optional.<Path>empty(),       /*generatedSourceFolder*/
+            Optional.<SourcePath>empty(), /*proguardConfig*/
+            ImmutableList.<String>of(),   /*postprocessClassesCommands*/
+            exportedDeps,
+            providedDeps,
+            buildCompileTimeClasspathDeps(exportedDeps, providedDeps, params),
+            JavaLibraryRules.getAbiInputs(resolver, javaLibraryParams.getBuildDeps()),
+            false,
+            new KotlincToJarStepFactory(
+                kotlinc,
+                args.extraKotlincArguments),
+            args.resourcesRoot,
+            args.manifestFile,
             args.mavenCoords,
-            args.mavenPomTemplate);
-      }
-    }
-
-    KotlincToJarStepFactory compileStepFactory = new KotlincToJarStepFactory(
-        kotlinBuckConfig.getKotlinCompiler().get(),
-        args.extraKotlincArguments);
-    DefaultJavaLibrary defaultKotlinLibrary =
-        new DefaultKotlinLibraryBuilder(
-            params,
-            resolver,
-            compileStepFactory)
-            .setConfigAndArgs(kotlinBuckConfig, args)
-            .build();
+            args.tests,
+            args.removeClasses);
 
     if (!flavors.contains(JavaLibrary.MAVEN_JAR)) {
       return defaultKotlinLibrary;
@@ -139,9 +179,25 @@ public class KotlinLibraryDescription implements
     }
   }
 
-
   @SuppressFieldNotInitialized
   public static class Arg extends JavaLibraryDescription.Arg {
-    public ImmutableList<String> extraKotlincArguments = ImmutableList.of();
+    ImmutableList<String> extraKotlincArguments = ImmutableList.of();
+  }
+
+  private ImmutableSortedSet<BuildRule> buildCompileTimeClasspathDeps(
+      ImmutableSortedSet<BuildRule> exportedDeps,
+      ImmutableSortedSet<BuildRule> providedDeps,
+      BuildRuleParams params) {
+    Iterable<BuildRule> declaredDeps = Iterables.concat(
+        params.getDeclaredDeps().get(),
+        exportedDeps,
+        providedDeps);
+
+    ImmutableSortedSet<BuildRule> rulesExportedByDependencies =
+        BuildRules.getExportedRules(declaredDeps);
+
+    return ImmutableSortedSet.copyOf(Iterables.concat(
+        declaredDeps,
+        rulesExportedByDependencies));
   }
 }

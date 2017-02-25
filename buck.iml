@@ -91,5 +91,8 @@
     <orderEntry type="library" name="jna-4.2.0" level="project" />
     <orderEntry type="library" name="jna-platform-4.2.0" level="project" />
     <orderEntry type="library" name="rocksdbjni-5.1.2" level="project" />
+    <orderEntry type="library" name="kotlin-compiler-1.1" level="project" />
+    <orderEntry type="library" name="kotlin-runtime-1.1" level="project" />
+    <orderEntry type="library" name="kotlin-compiler-daemon-client-1.1" level="project" />
   </component>
 </module>
