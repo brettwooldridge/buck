@@ -36,6 +36,7 @@ import com.facebook.infer.annotation.SuppressFieldNotInitialized;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.util.Optional;
@@ -103,7 +104,7 @@ public class KotlinTestDescription implements Description<KotlinTestDescription.
             Suppliers.ofInstance(ImmutableSortedSet.of())),
         pathResolver,
         testsLibrary,
-        kotlinBuckConfig.getPathToRuntimeJar(),
+        ImmutableSet.of(kotlinBuckConfig.getPathToRuntimeJar(ruleFinder)),
         args.labels,
         args.contacts,
         args.testType.orElse(TestType.JUNIT),

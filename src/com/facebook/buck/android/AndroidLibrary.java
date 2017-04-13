@@ -206,7 +206,7 @@ public class AndroidLibrary extends DefaultJavaLibrary implements AndroidPackage
 
       protected AndroidLibraryCompiler getAndroidCompiler() {
         if (androidCompiler == null) {
-          androidCompiler = compilerFactory.getCompiler(language);
+          androidCompiler = compilerFactory.getCompiler(language, sourcePathResolver);
         }
 
         return androidCompiler;

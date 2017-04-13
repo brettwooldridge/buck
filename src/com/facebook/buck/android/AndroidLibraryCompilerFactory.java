@@ -17,6 +17,7 @@
 package com.facebook.buck.android;
 
 import com.facebook.buck.android.AndroidLibraryDescription.JvmLanguage;
+import com.facebook.buck.rules.SourcePathResolver;
 
 /**
  * Factory providing implementations of {@link AndroidLibraryCompiler}
@@ -27,6 +28,8 @@ import com.facebook.buck.android.AndroidLibraryDescription.JvmLanguage;
  */
 public interface AndroidLibraryCompilerFactory {
 
-  AndroidLibraryCompiler getCompiler(JvmLanguage language);
+  AndroidLibraryCompiler getCompiler(
+      JvmLanguage language,
+      SourcePathResolver sourcePathResolver);
 }
 

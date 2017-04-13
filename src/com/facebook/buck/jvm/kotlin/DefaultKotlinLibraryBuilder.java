@@ -83,7 +83,8 @@ public class DefaultKotlinLibraryBuilder extends DefaultJavaLibraryBuilder {
     @Override
     protected CompileToJarStepFactory buildCompileStepFactory() {
       return new KotlincToJarStepFactory(
-          Preconditions.checkNotNull(kotlinBuckConfig).getKotlinc(),
+          Preconditions.checkNotNull(kotlinBuckConfig)
+                       .getKotlinc(ruleFinder, sourcePathResolver),
           extraKotlincArguments);
     }
   }

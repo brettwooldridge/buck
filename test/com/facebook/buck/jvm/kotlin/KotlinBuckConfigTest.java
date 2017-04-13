@@ -149,7 +149,7 @@ public class KotlinBuckConfigTest {
       .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    Path runtimeJar = kotlinBuckConfig.getPathToRuntimeJar();
+    Path runtimeJar = kotlinBuckConfig.getPathToRuntimeJar(ruleFinder);
     Assert.assertThat(runtimeJar.toString(),
                       Matchers.containsString(workspace.getPath(".").normalize().toString()));
   }
@@ -170,7 +170,7 @@ public class KotlinBuckConfigTest {
         .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    Path runtimeJar = kotlinBuckConfig.getPathToRuntimeJar();
+    Path runtimeJar = kotlinBuckConfig.getPathToRuntimeJar(ruleFinder);
     assertEquals(runtimeJar.toString(), kotlinRuntime.toString());
   }
 
@@ -190,7 +190,7 @@ public class KotlinBuckConfigTest {
         .build();
 
     KotlinBuckConfig kotlinBuckConfig = new KotlinBuckConfig(buckConfig);
-    PathSourcePath runtimeJar = (PathSourcePath) kotlinBuckConfig.getPathToRuntimeJar();
+    PathSourcePath runtimeJar = (PathSourcePath) kotlinBuckConfig.getPathToRuntimeJar(ruleFinder);
     assertEquals(runtimeJar.getRelativePath().toString(), "lib/kotlin-runtime.jar");
   }
 }

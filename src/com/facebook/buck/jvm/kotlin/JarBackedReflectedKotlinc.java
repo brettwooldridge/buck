@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.transform;
 
 import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.model.BuildTarget;
+import com.facebook.buck.model.Either;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.RuleKeyObjectSink;
 import com.facebook.buck.rules.SourcePath;
@@ -27,7 +28,6 @@ import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.rules.SourcePathRuleFinder;
 import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.util.ClassLoaderCache;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -70,14 +70,14 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
   private static final Map<Set<String>, Object> kotlinShims =
       new ConcurrentHashMap<>();
 
-  private final ImmutableSortedSet<SourcePath> classpath;
-  private final ImmutableSet<Path> compilerClassPath;
+  private final ImmutableSet<Either<SourcePath, Path>> compilerClassPath;
+  private final SourcePathResolver sourcePathResolver;
 
   JarBackedReflectedKotlinc(
-      ImmutableSet<Path> compilerClassPath,
-      Iterable<SourcePath> classpath) {
+      SourcePathResolver sourcePathResolver,
+      ImmutableSet<Either<SourcePath, Path>> compilerClassPath) {
+    this.sourcePathResolver = sourcePathResolver;
     this.compilerClassPath = compilerClassPath;
-    this.classpath = ImmutableSortedSet.copyOf(classpath);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
 
     ImmutableList<String> args = argsBuilder.build();
 
-    Set<File> compilerIdPaths = compilerClassPath
+    Set<File> compilerIdPaths = resolvedPaths()
         .stream()
         .map(Path::toFile)
         .collect(Collectors.toSet());
@@ -187,14 +187,27 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
 
   @Override
   public ImmutableCollection<SourcePath> getInputs() {
-    return classpath;
+    return ImmutableSet.<SourcePath>copyOf(
+        compilerClassPath
+            .stream()
+            .filter( p -> p.isLeft() )
+            .map( p -> p.getLeft())
+            .iterator());
   }
 
   @Override
   public void appendToRuleKey(RuleKeyObjectSink sink) {
     sink.setReflectively("kotlinc", "jar-backed")
         .setReflectively("kotlinc.version", "in-memory")
-        .setReflectively("kotlinc.classpath", classpath);
+        .setReflectively("kotlinc.classpath", compilerClassPath.toString());
+  }
+
+  private ImmutableSet<Path> resolvedPaths() {
+    return ImmutableSet.copyOf(
+        compilerClassPath
+            .stream()
+            .map(p -> p.isLeft() ? sourcePathResolver.getAbsolutePath(p.getLeft()) : p.getRight())
+            .iterator());
   }
 
   private Object loadCompilerShim(ExecutionContext context) {
@@ -205,19 +218,15 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
       ClassLoader classLoader = classLoaderCache.getClassLoaderForClassPath(
           this.getClass().getClassLoader(),
           ImmutableList.copyOf(
-          compilerClassPath
-            .stream()
-            .map(PATH_TO_URL)
-            .collect(Collectors.toList())));
+            resolvedPaths()
+              .stream()
+              .map(PATH_TO_URL)
+              .iterator()));
 
       return classLoader.loadClass(COMPILER_CLASS).newInstance();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
-  }
-  @VisibleForTesting
-  Iterable<SourcePath> getCompilerClassPath() {
-    return classpath;
   }
 
   @Override

@@ -19,6 +19,7 @@ package com.facebook.buck.android;
 import com.facebook.buck.jvm.java.JavaBuckConfig;
 import com.facebook.buck.jvm.kotlin.KotlinBuckConfig;
 import com.facebook.buck.jvm.scala.ScalaBuckConfig;
+import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.util.HumanReadableException;
 
 public class DefaultAndroidLibraryCompilerFactory implements AndroidLibraryCompilerFactory {
@@ -34,11 +35,13 @@ public class DefaultAndroidLibraryCompilerFactory implements AndroidLibraryCompi
   }
 
   @Override
-  public AndroidLibraryCompiler getCompiler(AndroidLibraryDescription.JvmLanguage language) {
+  public AndroidLibraryCompiler getCompiler(
+      AndroidLibraryDescription.JvmLanguage language,
+      SourcePathResolver sourcePathResolver) {
     switch (language) {
       case JAVA: return new JavaAndroidLibraryCompiler(javaConfig);
       case SCALA: return new ScalaAndroidLibraryCompiler(scalaConfig);
-      case KOTLIN: return new KotlinAndroidLibraryCompiler(kotlinBuckConfig);
+      case KOTLIN: return new KotlinAndroidLibraryCompiler(kotlinBuckConfig, sourcePathResolver);
     }
     throw new HumanReadableException("Unsupported `language` parameter value: %s", language);
   }

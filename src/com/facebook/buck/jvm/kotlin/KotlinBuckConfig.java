@@ -18,8 +18,13 @@ package com.facebook.buck.jvm.kotlin;
 
 import com.facebook.buck.cli.BuckConfig;
 import com.facebook.buck.io.ExecutableFinder;
+import com.facebook.buck.jvm.java.JavaLibrary;
+import com.facebook.buck.model.Either;
+import com.facebook.buck.rules.BuildRule;
+import com.facebook.buck.rules.SourcePath;
+import com.facebook.buck.rules.SourcePathResolver;
+import com.facebook.buck.rules.SourcePathRuleFinder;
 import com.facebook.buck.util.HumanReadableException;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -42,17 +47,18 @@ public class KotlinBuckConfig {
     this.delegate = delegate;
   }
 
-  public Kotlinc getKotlinc() {
+  public Kotlinc getKotlinc(
+      SourcePathRuleFinder ruleFinder,
+      SourcePathResolver sourcePathResolver) {
     if (isExternalCompilation()) {
       return new ExternalKotlinc(getCompilerPath());
     } else {
-      ImmutableSet<Path> classpathEntries = ImmutableSet.of(
-          getPathToRuntimeJar(),
-          getPathToCompilerJar());
+      ImmutableSet<Either<SourcePath, Path>> classpathEntries = ImmutableSet.of(
+          getPathToRuntimeJar(ruleFinder),
+          getPathToCompilerJar(ruleFinder));
 
       return
-          new JarBackedReflectedKotlinc(classpathEntries,
-              ImmutableList.of());
+          new JarBackedReflectedKotlinc(sourcePathResolver, classpathEntries);
     }
   }
 
@@ -72,27 +78,43 @@ public class KotlinBuckConfig {
   /**
    * Get the path to the Kotlin runtime jar.
    * @return the Kotlin runtime jar path
+   * @param ruleFinder
    */
-  Path getPathToRuntimeJar() {
+  Either<SourcePath, Path> getPathToRuntimeJar(SourcePathRuleFinder ruleFinder) {
+    Optional<SourcePath> sourcePath = delegate.getSourcePath(SECTION, "runtime_jar");
+    if (sourcePath.isPresent()) {
+      Optional<BuildRule> possibleRule = ruleFinder.getRule(sourcePath.get());
+      if (possibleRule.isPresent() && possibleRule.get() instanceof JavaLibrary) {
+        SourcePath kotlinJarPath = possibleRule.get().getSourcePathToOutput();
+        if (kotlinJarPath == null) {
+          throw new HumanReadableException(String.format(
+              "%s isn't a valid value for kotlin runtime_jar because it does not produce output",
+              sourcePath));
+        }
+
+        return Either.ofLeft(sourcePath.get());
+      }
+    }
+
     Optional<String> value = delegate.getValue(SECTION, "runtime_jar");
 
     if (value.isPresent()) {
       boolean isAbsolute = Paths.get(value.get()).isAbsolute();
       if (isAbsolute) {
-        return delegate.getPath(SECTION, "runtime_jar", false).get().normalize();
+        return Either.ofRight(delegate.getPath(SECTION, "runtime_jar", false).get().normalize());
       } else {
-        return delegate.getPath(SECTION, "runtime_jar", true).get();
+        return Either.ofRight(delegate.getPath(SECTION, "runtime_jar", true).get());
       }
     }
 
     Path runtime = getKotlinHome().resolve("kotlin-runtime.jar");
     if (Files.isRegularFile(runtime)) {
-      return runtime.toAbsolutePath().normalize();
+      return Either.ofRight(runtime.toAbsolutePath().normalize());
     }
 
     runtime = getKotlinHome().resolve(Paths.get("lib", "kotlin-runtime.jar"));
     if (Files.isRegularFile(runtime)) {
-      return runtime.toAbsolutePath().normalize();
+      return Either.ofRight(runtime.toAbsolutePath().normalize());
     }
 
     throw new HumanReadableException("Could not resolve kotlin runtime JAR location.");
@@ -101,27 +123,33 @@ public class KotlinBuckConfig {
   /**
    * Get the path to the Kotlin runtime jar.
    * @return the Kotlin runtime jar path
+   * @param ruleFinder
    */
-  Path getPathToCompilerJar() {
+  Either<SourcePath, Path> getPathToCompilerJar(SourcePathRuleFinder ruleFinder) {
+    Optional<SourcePath> sourcePath = delegate.getSourcePath(SECTION, "compiler_jar");
+    if (sourcePath.isPresent()) {
+      return Either.ofLeft(sourcePath.get());
+    }
+
     Optional<String> value = delegate.getValue(SECTION, "compiler_jar");
 
     if (value.isPresent()) {
       boolean isAbsolute = Paths.get(value.get()).isAbsolute();
       if (isAbsolute) {
-        return delegate.getPath(SECTION, "compiler_jar", false).get().normalize();
+        return Either.ofRight(delegate.getPath(SECTION, "compiler_jar", false).get().normalize());
       } else {
-        return delegate.getPath(SECTION, "compiler_jar", true).get();
+        return Either.ofRight(delegate.getPath(SECTION, "compiler_jar", true).get());
       }
     }
 
     Path compiler = getKotlinHome().resolve("kotlin-compiler.jar");
     if (Files.isRegularFile(compiler)) {
-      return compiler.toAbsolutePath().normalize();
+      return Either.ofRight(compiler.toAbsolutePath().normalize());
     }
 
     compiler = getKotlinHome().resolve(Paths.get("lib", "kotlin-compiler.jar"));
     if (Files.isRegularFile(compiler)) {
-      return compiler.toAbsolutePath().normalize();
+      return Either.ofRight(compiler.toAbsolutePath().normalize());
     }
 
     throw new HumanReadableException("Could not resolve kotlin compiler JAR location (kotlin home:" + getKotlinHome() + ".");
