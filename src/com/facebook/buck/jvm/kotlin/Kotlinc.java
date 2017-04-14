@@ -15,18 +15,17 @@
  */
 package com.facebook.buck.jvm.kotlin;
 
-import java.nio.file.Path;
-import java.util.Optional;
-
 import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.model.BuildTarget;
-import com.facebook.buck.rules.RuleKeyAppendable;
 import com.facebook.buck.rules.Tool;
 import com.facebook.buck.step.ExecutionContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 
-public interface Kotlinc extends RuleKeyAppendable, Tool {
+import java.nio.file.Path;
+import java.util.Optional;
+
+public interface Kotlinc extends Tool {
 
   KotlincVersion getVersion();
 

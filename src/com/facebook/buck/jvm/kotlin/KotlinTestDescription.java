@@ -104,7 +104,7 @@ public class KotlinTestDescription implements Description<KotlinTestDescription.
             Suppliers.ofInstance(ImmutableSortedSet.of())),
         pathResolver,
         testsLibrary,
-        ImmutableSet.of(kotlinBuckConfig.getPathToRuntimeJar(ruleFinder)),
+        ImmutableSet.of(kotlinBuckConfig.getPathToRuntimeJar()),
         args.labels,
         args.contacts,
         args.testType.orElse(TestType.JUNIT),

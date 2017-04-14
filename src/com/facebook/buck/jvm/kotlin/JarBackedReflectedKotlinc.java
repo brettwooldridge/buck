@@ -71,12 +71,9 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
       new ConcurrentHashMap<>();
 
   private final ImmutableSet<Either<SourcePath, Path>> compilerClassPath;
-  private final SourcePathResolver sourcePathResolver;
 
   JarBackedReflectedKotlinc(
-      SourcePathResolver sourcePathResolver,
       ImmutableSet<Either<SourcePath, Path>> compilerClassPath) {
-    this.sourcePathResolver = sourcePathResolver;
     this.compilerClassPath = compilerClassPath;
   }
 
@@ -143,7 +140,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
 
     ImmutableList<String> args = argsBuilder.build();
 
-    Set<File> compilerIdPaths = resolvedPaths()
+    Set<File> compilerIdPaths = getExtraClassPath()
         .stream()
         .map(Path::toFile)
         .collect(Collectors.toSet());
@@ -190,8 +187,8 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
     return ImmutableSet.<SourcePath>copyOf(
         compilerClassPath
             .stream()
-            .filter( p -> p.isLeft() )
-            .map( p -> p.getLeft())
+            .filter(p -> p.isLeft())
+            .map(p -> p.getLeft())
             .iterator());
   }
 
@@ -202,12 +199,13 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
         .setReflectively("kotlinc.classpath", compilerClassPath.toString());
   }
 
-  private ImmutableSet<Path> resolvedPaths() {
+  private ImmutableSet<Path> getExtraClassPath() {
     return ImmutableSet.copyOf(
         compilerClassPath
-            .stream()
-            .map(p -> p.isLeft() ? sourcePathResolver.getAbsolutePath(p.getLeft()) : p.getRight())
-            .iterator());
+          .stream()
+        .filter(p -> p.isRight())
+        .map(p -> p.getRight())
+        .iterator());
   }
 
   private Object loadCompilerShim(ExecutionContext context) {
@@ -218,7 +216,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
       ClassLoader classLoader = classLoaderCache.getClassLoaderForClassPath(
           this.getClass().getClassLoader(),
           ImmutableList.copyOf(
-            resolvedPaths()
+            getExtraClassPath()
               .stream()
               .map(PATH_TO_URL)
               .iterator()));

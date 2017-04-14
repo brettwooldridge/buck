@@ -23,7 +23,6 @@ import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.rules.AbstractNodeBuilder;
 import com.facebook.buck.rules.PathSourcePath;
 import com.facebook.buck.rules.SourcePath;
-import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.rules.query.Query;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
 
@@ -34,7 +33,7 @@ public class AndroidLibraryBuilder extends
     AbstractNodeBuilder<AndroidLibraryDescription.Arg, AndroidLibraryDescription, AndroidLibrary> {
 
   private static final AndroidLibraryCompilerFactory JAVA_ONLY_COMPILER_FACTORY =
-      language, SourcePathResolver sourcePathResolver -> new JavaAndroidLibraryCompiler(DEFAULT_JAVA_CONFIG);
+      language -> new JavaAndroidLibraryCompiler(DEFAULT_JAVA_CONFIG);
 
   private AndroidLibraryBuilder(BuildTarget target) {
     super(

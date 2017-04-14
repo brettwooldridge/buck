@@ -93,9 +93,19 @@ public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
             filesystem));
   }
 
+//  @Override
+//  public Iterable<BuildRule> getExtraDeps(SourcePathRuleFinder ruleFinder) {
+//    return RichStream.from(kotlinc.getInputs())
+//        .filter(BuildTargetSourcePath.class)
+//        .map(ruleFinder::getRule)
+//        .filter(possibleRule -> possibleRule.isPresent() && possibleRule.get() instanceof JavaLibrary)
+//        .map(Optional::get)
+//        .collect(MoreCollectors.toImmutableSet());
+//  }
+
   @Override
   public void appendToRuleKey(RuleKeyObjectSink sink) {
-    // kotlinc.appendToRuleKey(sink);
+    kotlinc.appendToRuleKey(sink);
     sink.setReflectively("extraArguments", extraArguments);
   }
 

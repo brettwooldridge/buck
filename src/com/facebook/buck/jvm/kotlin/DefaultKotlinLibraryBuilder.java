@@ -21,10 +21,17 @@ import com.facebook.buck.jvm.java.DefaultJavaLibrary;
 import com.facebook.buck.jvm.java.DefaultJavaLibraryBuilder;
 import com.facebook.buck.jvm.java.JavaLibraryDescription;
 import com.facebook.buck.parser.NoSuchBuildTargetException;
+import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
+import com.facebook.buck.rules.BuildTargetSourcePath;
+import com.facebook.buck.rules.SourcePath;
+import com.facebook.buck.util.HumanReadableException;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+
+import java.util.Optional;
 
 
 public class DefaultKotlinLibraryBuilder extends DefaultJavaLibraryBuilder {
@@ -82,9 +89,22 @@ public class DefaultKotlinLibraryBuilder extends DefaultJavaLibraryBuilder {
 
     @Override
     protected CompileToJarStepFactory buildCompileStepFactory() {
+      Kotlinc kotlinc = Preconditions.checkNotNull(kotlinBuckConfig).getKotlinc();
+      ImmutableCollection<SourcePath> inputs = kotlinc.getInputs();
+      for (SourcePath path : inputs) {
+        BuildTargetSourcePath<?> btsp = (BuildTargetSourcePath<?>) path;
+        Optional<BuildRule> ruleOptional = buildRuleResolver.getRuleOptional(btsp.getTarget());
+        if (!ruleOptional.isPresent()) {
+          try {
+            buildRuleResolver.requireRule(btsp.getTarget());
+          } catch (NoSuchBuildTargetException e) {
+            throw new HumanReadableException("Rule for target '%s' could not be resolved.", btsp.getTarget());
+          }
+        }
+        System.err.println(ruleOptional);
+      }
       return new KotlincToJarStepFactory(
-          Preconditions.checkNotNull(kotlinBuckConfig)
-                       .getKotlinc(ruleFinder, sourcePathResolver),
+          Preconditions.checkNotNull(kotlinBuckConfig).getKotlinc(),
           extraKotlincArguments);
     }
   }

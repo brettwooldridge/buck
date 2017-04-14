@@ -18,12 +18,8 @@ package com.facebook.buck.jvm.kotlin;
 
 import com.facebook.buck.cli.BuckConfig;
 import com.facebook.buck.io.ExecutableFinder;
-import com.facebook.buck.jvm.java.JavaLibrary;
 import com.facebook.buck.model.Either;
-import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.SourcePath;
-import com.facebook.buck.rules.SourcePathResolver;
-import com.facebook.buck.rules.SourcePathRuleFinder;
 import com.facebook.buck.util.HumanReadableException;
 import com.google.common.collect.ImmutableSet;
 
@@ -47,18 +43,16 @@ public class KotlinBuckConfig {
     this.delegate = delegate;
   }
 
-  public Kotlinc getKotlinc(
-      SourcePathRuleFinder ruleFinder,
-      SourcePathResolver sourcePathResolver) {
+  public Kotlinc getKotlinc() {
     if (isExternalCompilation()) {
       return new ExternalKotlinc(getCompilerPath());
     } else {
       ImmutableSet<Either<SourcePath, Path>> classpathEntries = ImmutableSet.of(
-          getPathToRuntimeJar(ruleFinder),
-          getPathToCompilerJar(ruleFinder));
+          getPathToRuntimeJar(),
+          getPathToCompilerJar());
 
       return
-          new JarBackedReflectedKotlinc(sourcePathResolver, classpathEntries);
+          new JarBackedReflectedKotlinc(classpathEntries);
     }
   }
 
@@ -78,22 +72,21 @@ public class KotlinBuckConfig {
   /**
    * Get the path to the Kotlin runtime jar.
    * @return the Kotlin runtime jar path
-   * @param ruleFinder
    */
-  Either<SourcePath, Path> getPathToRuntimeJar(SourcePathRuleFinder ruleFinder) {
+  Either<SourcePath, Path> getPathToRuntimeJar() {
     Optional<SourcePath> sourcePath = delegate.getSourcePath(SECTION, "runtime_jar");
     if (sourcePath.isPresent()) {
-      Optional<BuildRule> possibleRule = ruleFinder.getRule(sourcePath.get());
-      if (possibleRule.isPresent() && possibleRule.get() instanceof JavaLibrary) {
-        SourcePath kotlinJarPath = possibleRule.get().getSourcePathToOutput();
-        if (kotlinJarPath == null) {
-          throw new HumanReadableException(String.format(
-              "%s isn't a valid value for kotlin runtime_jar because it does not produce output",
-              sourcePath));
-        }
+//      Optional<BuildRule> possibleRule = ruleFinder.getRule(sourcePath.get());
+//      if (possibleRule.isPresent() && possibleRule.get() instanceof JavaLibrary) {
+//        SourcePath kotlinJarPath = possibleRule.get().getSourcePathToOutput();
+//        if (kotlinJarPath == null) {
+//          throw new HumanReadableException(String.format(
+//              "%s isn't a valid value for kotlin runtime_jar because it does not produce output",
+//              sourcePath));
+//        }
 
         return Either.ofLeft(sourcePath.get());
-      }
+//      }
     }
 
     Optional<String> value = delegate.getValue(SECTION, "runtime_jar");
@@ -123,9 +116,8 @@ public class KotlinBuckConfig {
   /**
    * Get the path to the Kotlin runtime jar.
    * @return the Kotlin runtime jar path
-   * @param ruleFinder
    */
-  Either<SourcePath, Path> getPathToCompilerJar(SourcePathRuleFinder ruleFinder) {
+  Either<SourcePath, Path> getPathToCompilerJar() {
     Optional<SourcePath> sourcePath = delegate.getSourcePath(SECTION, "compiler_jar");
     if (sourcePath.isPresent()) {
       return Either.ofLeft(sourcePath.get());
