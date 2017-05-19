@@ -27,7 +27,8 @@ public class KotlinAndroidLibraryCompiler extends AndroidLibraryCompiler {
 
   private final KotlinBuckConfig kotlinBuckConfig;
 
-  public KotlinAndroidLibraryCompiler(KotlinBuckConfig kotlinBuckConfig) {
+  public KotlinAndroidLibraryCompiler(
+      KotlinBuckConfig kotlinBuckConfig) {
     super();
     this.kotlinBuckConfig = kotlinBuckConfig;
   }
@@ -43,7 +44,7 @@ public class KotlinAndroidLibraryCompiler extends AndroidLibraryCompiler {
       JavacOptions javacOptions,
       BuildRuleResolver resolver) {
     return new KotlincToJarStepFactory(
-        kotlinBuckConfig.getKotlinCompiler().get(),
+        kotlinBuckConfig.getKotlinc(),
         ImmutableList.of(),
         ANDROID_CLASSPATH_FROM_CONTEXT);
   }

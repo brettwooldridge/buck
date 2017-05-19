@@ -16,7 +16,6 @@
 
 package com.facebook.buck.jvm.kotlin;
 
-import com.facebook.buck.jvm.java.DefaultJavaLibrary;
 import com.facebook.buck.jvm.java.HasJavaAbi;
 import com.facebook.buck.jvm.java.JavaLibrary;
 import com.facebook.buck.jvm.java.JavaLibraryDescription;
@@ -44,12 +43,14 @@ import org.immutables.value.Value;
 public class KotlinLibraryDescription
     implements Description<KotlinLibraryDescriptionArg>, Flavored {
 
+  private static final ImmutableSet<Flavor> SUPPORTED_FLAVORS = ImmutableSet.of(
+      JavaLibrary.SRC_JAR,
+      JavaLibrary.MAVEN_JAR);
+
   private final KotlinBuckConfig kotlinBuckConfig;
 
-  public static final ImmutableSet<Flavor> SUPPORTED_FLAVORS =
-      ImmutableSet.of(JavaLibrary.SRC_JAR, JavaLibrary.MAVEN_JAR);
-
-  public KotlinLibraryDescription(KotlinBuckConfig kotlinBuckConfig) {
+  public KotlinLibraryDescription(
+      KotlinBuckConfig kotlinBuckConfig) {
     this.kotlinBuckConfig = kotlinBuckConfig;
   }
 
@@ -103,6 +104,11 @@ public class KotlinLibraryDescription
 
     DefaultKotlinLibraryBuilder defaultKotlinLibraryBuilder =
         new DefaultKotlinLibraryBuilder(params, resolver, kotlinBuckConfig).setArgs(args);
+//    DefaultKotlinLibraryBuilder defaultKotlinLibraryBuilder = new DefaultKotlinLibraryBuilder(
+//        params,
+//        resolver,
+//        kotlinBuckConfig)
+//        .setArgs(args);
 
     // We know that the flavour we're being asked to create is valid, since the check is done when
     // creating the action graph from the target graph.
@@ -110,7 +116,7 @@ public class KotlinLibraryDescription
       return defaultKotlinLibraryBuilder.buildAbi();
     }
 
-    DefaultJavaLibrary defaultKotlinLibrary = defaultKotlinLibraryBuilder.build();
+    DefaultKotlinLibrary defaultKotlinLibrary = (DefaultKotlinLibrary) defaultKotlinLibraryBuilder.build();
 
     if (!flavors.contains(JavaLibrary.MAVEN_JAR)) {
       return defaultKotlinLibrary;

@@ -13,19 +13,21 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+package com.facebook.buck.jvm.kotlin;
 
-package com.facebook.buck.android;
+import org.immutables.value.Value;
 
-import com.facebook.buck.android.AndroidLibraryDescription.JvmLanguage;
+import com.facebook.buck.util.immutables.BuckStyleImmutable;
 
-/**
- * Factory providing implementations of {@link AndroidLibraryCompiler} for the specified {@code
- * language}. {@link AndroidLibraryDescription} uses this factory to handle multiple JVM languages.
- * Implementations should provide a compiler implementation for every {@link JvmLanguage}. See
- * {@link DefaultAndroidLibraryCompiler}
- */
-public interface AndroidLibraryCompilerFactory {
+@Value.Immutable
+@BuckStyleImmutable
+public abstract class AbstractKotlincVersion {
+  @Value.Parameter
+  public abstract String getVersionString();
 
-  AndroidLibraryCompiler getCompiler(
-      JvmLanguage language);
+  @Override
+  public String toString() {
+    return getVersionString();
+  }
+
 }

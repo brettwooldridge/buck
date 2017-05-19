@@ -5,7 +5,7 @@ java_library(
         excludes = [
             "*Benchmark.java",
             "*Test.java",
-        ],
+        ]
     ),
     visibility = ["//test/..."],
     deps = [
@@ -137,8 +137,10 @@ java_library(
     ],
 )
 
-standard_java_test(
+java_test(
     name = "kotlin",
+    srcs = glob(["*Test.java"]),
+    resources = glob(["testdata/faux_kotlin_home/**"]),
     deps = [
         "//src-gen:thrift",
         "//src/com/facebook/buck/android:apkmodule",
@@ -195,6 +197,7 @@ standard_java_test(
         "//src/com/facebook/buck/jvm/java/classes:classes",
         "//src/com/facebook/buck/jvm/kotlin:kotlin",
         "//src/com/facebook/buck/jvm/scala:scala",
+        "//src/com/facebook/buck/log:api",
         "//src/com/facebook/buck/log:log",
         "//src/com/facebook/buck/maven:util",
         "//src/com/facebook/buck/message_ipc:message_ipc",

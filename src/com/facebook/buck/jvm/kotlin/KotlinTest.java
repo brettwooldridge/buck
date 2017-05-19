@@ -27,6 +27,7 @@ import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class KotlinTest extends JavaTest {
       BuildRuleParams params,
       SourcePathResolver pathResolver,
       JavaLibrary compiledTestsLibrary,
-      ImmutableSet<Either<SourcePath, Path>> additionalClasspathEntries,
+      ImmutableSet<Path> additionalClasspathEntries,
       Set<String> labels,
       Set<String> contacts,
       TestType testType,
@@ -60,7 +61,10 @@ public class KotlinTest extends JavaTest {
         params,
         pathResolver,
         compiledTestsLibrary,
-        additionalClasspathEntries,
+        ImmutableSet.copyOf(additionalClasspathEntries
+            .stream()
+            .map(path -> Either.<SourcePath, Path>ofRight(path))
+            .iterator()),
         labels,
         contacts,
         testType,

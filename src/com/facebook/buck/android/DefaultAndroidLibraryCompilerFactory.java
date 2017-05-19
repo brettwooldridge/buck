@@ -34,7 +34,8 @@ public class DefaultAndroidLibraryCompilerFactory implements AndroidLibraryCompi
   }
 
   @Override
-  public AndroidLibraryCompiler getCompiler(AndroidLibraryDescription.JvmLanguage language) {
+  public AndroidLibraryCompiler getCompiler(
+      AndroidLibraryDescription.JvmLanguage language) {
     switch (language) {
       case JAVA:
         return new JavaAndroidLibraryCompiler(javaConfig);
