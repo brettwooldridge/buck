@@ -139,7 +139,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
 
     ImmutableList<String> args = argsBuilder.build();
 
-    Set<File> compilerIdPaths = getExtraClassPath()
+    Set<File> compilerIdPaths = compilerClassPath
         .stream()
         .map(Path::toFile)
         .collect(Collectors.toSet());
@@ -193,10 +193,6 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
         .setReflectively("kotlinc.classpath", compilerClassPath.toString());
   }
 
-  private ImmutableSet<Path> getExtraClassPath() {
-    return compilerClassPath;
-  }
-
   private Object loadCompilerShim(ExecutionContext context) {
     try {
       ClassLoaderCache classLoaderCache = context.getClassLoaderCache();
@@ -205,7 +201,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
       ClassLoader classLoader = classLoaderCache.getClassLoaderForClassPath(
           this.getClass().getClassLoader(),
           ImmutableList.copyOf(
-            getExtraClassPath()
+              compilerClassPath
               .stream()
               .map(PATH_TO_URL)
               .iterator()));

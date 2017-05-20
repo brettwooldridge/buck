@@ -104,7 +104,7 @@ public class KotlincToJarStepFactory extends BaseCompileToJarStepFactory {
 
   @Override
   public void appendToRuleKey(RuleKeyObjectSink sink) {
-    kotlinc.appendToRuleKey(sink);
+    // kotlinc.appendToRuleKey(sink);
     sink.setReflectively("extraArguments", extraArguments);
   }
 

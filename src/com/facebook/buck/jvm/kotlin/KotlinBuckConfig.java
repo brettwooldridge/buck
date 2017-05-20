@@ -72,26 +72,17 @@ public class KotlinBuckConfig {
    * @return the Kotlin runtime jar path
    */
   Path getPathToStdlibJar() {
-    Path stdlib = getKotlinHome().resolve("kotlin-stdlib.jar");
-    if (Files.isRegularFile(stdlib)) {
-      return stdlib.normalize();
-    }
-
-    if (Files.isRegularFile(stdlib)) {
-      return stdlib.normalize();
-    }
-
-    stdlib = getKotlinHome().resolve(Paths.get("lib", "kotlin-stdlib.jar"));
-    if (Files.isRegularFile(stdlib)) {
-      return stdlib.normalize();
-    }
-
-    stdlib = getKotlinHome().resolve("kotlin-runtime.jar");
+    Path stdlib = getKotlinHome().resolve("kotlin-runtime.jar");
     if (Files.isRegularFile(stdlib)) {
       return stdlib.normalize();
     }
 
     stdlib = getKotlinHome().resolve(Paths.get("lib", "kotlin-runtime.jar"));
+    if (Files.isRegularFile(stdlib)) {
+      return stdlib.normalize();
+    }
+
+    stdlib = getKotlinHome().resolve(Paths.get("libexec","lib", "kotlin-runtime.jar"));
     if (Files.isRegularFile(stdlib)) {
       return stdlib.normalize();
     }
@@ -111,6 +102,11 @@ public class KotlinBuckConfig {
     }
 
     compiler = getKotlinHome().resolve(Paths.get("lib", "kotlin-compiler.jar"));
+    if (Files.isRegularFile(compiler)) {
+      return compiler.normalize();
+    }
+
+    compiler = getKotlinHome().resolve(Paths.get("libexec","lib", "kotlin-compiler.jar"));
     if (Files.isRegularFile(compiler)) {
       return compiler.normalize();
     }
@@ -156,7 +152,7 @@ public class KotlinBuckConfig {
         boolean isAbsolute = Paths.get(value.get()).isAbsolute();
         Optional<Path> homePath = delegate.getPath(SECTION, "kotlin_home", !isAbsolute);
         if (homePath.isPresent() && Files.isDirectory(homePath.get())) {
-          return homePath.get().toRealPath().getParent().normalize();
+          return homePath.get().toRealPath().normalize();
         } else {
           throw new HumanReadableException(
               "Kotlin home directory (" + homePath + ") specified in .buckconfig was not found.");
