@@ -137,6 +137,25 @@ public class StubJarTest {
   }
 
   @Test
+  public void testDeprecatedViaDocComment() throws IOException {
+    tester
+        .setSourceFile(
+            "A.java", "package com.example.buck;", "/** @deprecated */", "public class A { }")
+        .addExpectedStub(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// DEPRECATED",
+            "// access flags 0x20021",
+            "public class com/example/buck/A {",
+            "",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
+            "}")
+        .createAndCheckStubJar();
+  }
+
+  @Test
   public void classWithTwoMethods() throws IOException {
     tester
         .setSourceFile(
@@ -262,12 +281,18 @@ public class StubJarTest {
             "  public class B { }",
             "  public class C { }",
             "  public void bar() { }",
+            "    public F.H third;",
             "  public class D { }",
+            "    public F.G fourth;",
             "    int between;",
             "  public class E {",
             "    public void hello() { }",
             "    public void test() { }",
             "  }",
+            "}",
+            "class F {",
+            "  class G { }",
+            "  class H { }",
             "}")
         .addExpectedStub(
             "com/example/buck/A$B",
@@ -337,12 +362,22 @@ public class StubJarTest {
             "  public INNERCLASS com/example/buck/A$C com/example/buck/A C",
             "  // access flags 0x1",
             "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$G com/example/buck/F G",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$H com/example/buck/F H",
             "",
             "  // access flags 0x0",
             "  Z first",
             "",
             "  // access flags 0x0",
             "  F second",
+            "",
+            "  // access flags 0x1",
+            "  public Lcom/example/buck/F$H; third",
+            "",
+            "  // access flags 0x1",
+            "  public Lcom/example/buck/F$G; fourth",
             "",
             "  // access flags 0x0",
             "  I between",
@@ -355,6 +390,44 @@ public class StubJarTest {
             "",
             "  // access flags 0x1",
             "  public bar()V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/F$G",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/F$G {",
+            "",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$G com/example/buck/F G",
+            "",
+            "  // access flags 0x0",
+            "  <init>(Lcom/example/buck/F;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/F$H",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/F$H {",
+            "",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$H com/example/buck/F H",
+            "",
+            "  // access flags 0x0",
+            "  <init>(Lcom/example/buck/F;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/F",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/F {",
+            "",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$H com/example/buck/F H",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/F$G com/example/buck/F G",
+            "",
+            "  // access flags 0x0",
+            "  <init>()V",
             "}")
         .createAndCheckStubJar();
   }
@@ -501,8 +574,6 @@ public class StubJarTest {
 
   @Test
   public void shouldGeneratePrivateNestedClassDefaultConstructor() throws IOException {
-    notYetImplementedForSource();
-
     tester
         .setSourceFile(
             "Outer.java",
@@ -1530,7 +1601,9 @@ public class StubJarTest {
             "// access flags 0x21",
             "public class com/example/buck/A {",
             "",
-            "", // TODO(jkeljo): If the private inner is stubbed, there should be an entry here too
+            "  // access flags 0x2",
+            "  private INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "",
             "  // access flags 0x1",
             "  public <init>()V",
             "}")
@@ -1693,8 +1766,6 @@ public class StubJarTest {
 
   @Test
   public void stubsNestedInnerClasses() throws IOException {
-    notYetImplementedForSource();
-
     tester
         .setSourceFile(
             "A.java",
@@ -1704,8 +1775,69 @@ public class StubJarTest {
             "    public class C {",
             "      public int count;",
             "      public void foo() {}",
+            "      public class D { }",
             "    }",
             "  }",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A$B$C$D",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B$C$D {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C com/example/buck/A$B C",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C$D com/example/buck/A$B$C D",
+            "",
+            "  // access flags 0x1010",
+            "  final synthetic Lcom/example/buck/A$B$C; this$2",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A$B$C;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A$B$C$D",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B$C$D {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C com/example/buck/A$B C",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C$D com/example/buck/A$B$C D",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A$B$C;)V",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A$B$C",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B$C {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C com/example/buck/A$B C",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C$D com/example/buck/A$B$C D",
+            "",
+            "  // access flags 0x1",
+            "  public I count",
+            "",
+            "  // access flags 0x1010",
+            "  final synthetic Lcom/example/buck/A$B; this$1",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A$B;)V",
+            "",
+            "  // access flags 0x1",
+            "  public foo()V",
             "}")
         .addExpectedStub(
             "com/example/buck/A$B$C",
@@ -1717,6 +1849,8 @@ public class StubJarTest {
             "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
             "  // access flags 0x1",
             "  public INNERCLASS com/example/buck/A$B$C com/example/buck/A$B C",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C$D com/example/buck/A$B$C D",
             "",
             "  // access flags 0x1",
             "  public I count",
@@ -1726,6 +1860,23 @@ public class StubJarTest {
             "",
             "  // access flags 0x1",
             "  public foo()V",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A$B",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B$C com/example/buck/A$B C",
+            "",
+            "  // access flags 0x1010",
+            "  final synthetic Lcom/example/buck/A; this$0",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A;)V",
             "}")
         .addExpectedStub(
             "com/example/buck/A$B",
@@ -1740,6 +1891,18 @@ public class StubJarTest {
             "",
             "  // access flags 0x1",
             "  public <init>(Lcom/example/buck/A;)V",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
             "}")
         .addExpectedStub(
             "com/example/buck/A",
@@ -1758,16 +1921,70 @@ public class StubJarTest {
 
   @Test
   public void stubsReferencesToInnerClassesOfOtherTypes() throws IOException {
-    notYetImplementedForSource();
     tester
         .setSourceFile(
             "A.java",
             "package com.example.buck;",
             "public class A {",
-            "  B.C field;",
+            "  class Inner {",
+            "    B.D field1;",
+            "    B.C field2;",
+            "  }",
             "}",
             "class B {",
             "  public class C { }",
+            "  public class D { }",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A$Inner",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/A$Inner {",
+            "",
+            // An innerclass entry is present for B$C and B$D even though they're not inner classes
+            // of A, so that the compiler and runtime know how to interpret the name B$C or B$D.
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$D com/example/buck/B D",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$C com/example/buck/B C",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/A$Inner com/example/buck/A Inner",
+            "",
+            "  // access flags 0x0",
+            "  Lcom/example/buck/B$D; field1",
+            "",
+            "  // access flags 0x0",
+            "  Lcom/example/buck/B$C; field2",
+            "",
+            "  // access flags 0x1010",
+            "  final synthetic Lcom/example/buck/A; this$0",
+            "",
+            "  // access flags 0x0",
+            "  <init>(Lcom/example/buck/A;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A$Inner",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/A$Inner {",
+            "",
+            "  // access flags 0x0",
+            "  INNERCLASS com/example/buck/A$Inner com/example/buck/A Inner",
+            // Inenrclass entries for references to other classes are sorted. Otherwise the order
+            // in class-based ABIs could be influenced by references inside method bodies.
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$C com/example/buck/B C",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$D com/example/buck/B D",
+            "",
+            "  // access flags 0x0",
+            "  Lcom/example/buck/B$D; field1",
+            "",
+            "  // access flags 0x0",
+            "  Lcom/example/buck/B$C; field2",
+            "",
+            "  // access flags 0x0",
+            "  <init>(Lcom/example/buck/A;)V",
             "}")
         .addExpectedStub(
             "com/example/buck/A",
@@ -1775,13 +1992,8 @@ public class StubJarTest {
             "// access flags 0x21",
             "public class com/example/buck/A {",
             "",
-            // An innerclass entry is present for B$C even though it's not an inner class of A, so
-            // that the compiler and runtime know how to interpret the name B$C:
-            "  // access flags 0x1",
-            "  public INNERCLASS com/example/buck/B$C com/example/buck/B C",
-            "",
             "  // access flags 0x0",
-            "  Lcom/example/buck/B$C; field",
+            "  INNERCLASS com/example/buck/A$Inner com/example/buck/A Inner",
             "",
             "  // access flags 0x1",
             "  public <init>()V",
@@ -1799,16 +2011,210 @@ public class StubJarTest {
             "  public <init>(Lcom/example/buck/B;)V",
             "}")
         .addExpectedStub(
+            "com/example/buck/B$D",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/B$D {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$D com/example/buck/B D",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/B;)V",
+            "}")
+        .addExpectedStub(
             "com/example/buck/B",
             "// class version 52.0 (52)",
             "// access flags 0x20",
             "class com/example/buck/B {",
             "",
             "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/B$D com/example/buck/B D",
+            "  // access flags 0x1",
             "  public INNERCLASS com/example/buck/B$C com/example/buck/B C",
             "",
             "  // access flags 0x0",
             "  <init>()V",
+            "}")
+        .createAndCheckStubJar();
+  }
+
+  @Test
+  public void stubsImportedReferencesToInnerClassesOfOtherTypes() throws IOException {
+    notYetImplementedForSource();
+    tester
+        .setSourceFile(
+            "Imported.java",
+            "package com.example.buck.imported;",
+            "public class Imported {",
+            "  public class Inner {",
+            "    public class Innerer { }",
+            "  }",
+            "}")
+        .compileFullJar()
+        .addFullJarToClasspath()
+        .setSourceFile(
+            "A.java",
+            "package com.example.buck;",
+            "import com.example.buck.imported.Imported.Inner.Innerer;",
+            "public class A {",
+            "  public Innerer field;",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/imported/Imported$Inner com/example/buck/imported/Imported Inner",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/imported/Imported$Inner$Innerer com/example/buck/imported/Imported$Inner Innerer",
+            "",
+            "  // access flags 0x1",
+            "  public Lcom/example/buck/imported/Imported$Inner$Innerer; field",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
+            "}")
+        .createAndCheckStubJar();
+  }
+
+  @Test
+  public void doesNotStubReferencesToInnerClassesFromInsideMethods() throws IOException {
+    tester
+        .setSourceFile(
+            "A.java",
+            "package com.example.buck;",
+            "import java.util.Map;",
+            "public class A {",
+            "  public void foo(Map<String, String> map) {",
+            "    for (Map.Entry<String, String> entry : map.entrySet()) {",
+            "      entry.getValue();",
+            "    }",
+            "  }",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A {",
+            "",
+            "  // access flags 0x609",
+            // This entry won't be in the stub:
+            "  public static abstract INNERCLASS java/util/Map$Entry java/util/Map Entry",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
+            "",
+            "  // access flags 0x1",
+            "  // signature (Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;)V",
+            "  // declaration: void foo(java.util.Map<java.lang.String, java.lang.String>)",
+            "  public foo(Ljava/util/Map;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A {",
+            "",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
+            "",
+            "  // access flags 0x1",
+            "  // signature (Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;)V",
+            "  // declaration: void foo(java.util.Map<java.lang.String, java.lang.String>)",
+            "  public foo(Ljava/util/Map;)V",
+            "}")
+        .createAndCheckStubJar();
+  }
+
+  @Test
+  public void doesNotStubReferencesFromBridgeMethodsToInnerClassesOtherTypes() throws IOException {
+    tester
+        .setSourceFile(
+            "A.java",
+            "package com.example.buck;",
+            "public class A {",
+            "  public class B extends C { }",
+            "}",
+            "class C {",
+            "  public D foo() { return new D(); }",
+            "  static class D {",
+            "  }",
+            "}")
+        .addExpectedFullAbi(
+            "com/example/buck/A$B",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B extends com/example/buck/C  {",
+            "",
+            "  // access flags 0x8",
+            // The following entry won't be present, because it's only here for the bridge method
+            "  static INNERCLASS com/example/buck/C$D com/example/buck/C D",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "",
+            "  // access flags 0x1010",
+            "  final synthetic Lcom/example/buck/A; this$0",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A;)V",
+            "",
+            "  // access flags 0x1041",
+            "  public synthetic bridge foo()Lcom/example/buck/C$D;",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A$B",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A$B extends com/example/buck/C  {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "",
+            "  // access flags 0x1",
+            "  public <init>(Lcom/example/buck/A;)V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/A",
+            "// class version 52.0 (52)",
+            "// access flags 0x21",
+            "public class com/example/buck/A {",
+            "",
+            "  // access flags 0x1",
+            "  public INNERCLASS com/example/buck/A$B com/example/buck/A B",
+            "",
+            "  // access flags 0x1",
+            "  public <init>()V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/C$D",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/C$D {",
+            "",
+            "  // access flags 0x8",
+            "  static INNERCLASS com/example/buck/C$D com/example/buck/C D",
+            "",
+            "  // access flags 0x0",
+            "  <init>()V",
+            "}")
+        .addExpectedStub(
+            "com/example/buck/C",
+            "// class version 52.0 (52)",
+            "// access flags 0x20",
+            "class com/example/buck/C {",
+            "",
+            "  // access flags 0x8",
+            "  static INNERCLASS com/example/buck/C$D com/example/buck/C D",
+            "",
+            "  // access flags 0x0",
+            "  <init>()V",
+            "",
+            "  // access flags 0x1",
+            "  public foo()Lcom/example/buck/C$D;",
             "}")
         .createAndCheckStubJar();
   }
@@ -1978,7 +2384,7 @@ public class StubJarTest {
 
   @Test
   public void shouldIncludeInnerClassTypeParameterReferenceInMethodParameter() throws IOException {
-    notYetImplementedForSource();
+    notYetImplementedForMissingClasspath();
 
     tester
         .setSourceFile(
@@ -2890,8 +3296,9 @@ public class StubJarTest {
   }
 
   private final class Tester {
-    private final List<String> expectedDirectory = new ArrayList<>();
-    private final List<String> actualDirectory = new ArrayList<>();
+    private final List<String> expectedStubDirectory = new ArrayList<>();
+    private final List<String> actualStubDirectory = new ArrayList<>();
+    private final List<String> actualFullDirectory = new ArrayList<>();
     private final Map<String, List<String>> expectedFullAbis = new HashMap<>();
     private final Map<String, List<String>> actualFullAbis = new HashMap<>();
     private final Map<String, List<String>> expectedStubs = new HashMap<>();
@@ -2902,6 +3309,22 @@ public class StubJarTest {
     private ImmutableSortedSet<Path> classpath = EMPTY_CLASSPATH;
     private Path stubJarPath;
     private Path fullJarPath;
+
+    public Tester() {
+      expectedStubDirectory.add("META-INF/");
+      expectedStubDirectory.add("com/");
+      expectedStubDirectory.add("com/example/");
+      expectedStubDirectory.add("com/example/buck/");
+    }
+
+    private void resetActuals() {
+      actualStubDirectory.clear();
+      actualFullDirectory.clear();
+      actualFullAbis.clear();
+      actualStubs.clear();
+      stubJarPath = null;
+      fullJarPath = null;
+    }
 
     public Tester setSourceFile(String fileName, String... lines) {
       sourceFileName = fileName;
@@ -2917,7 +3340,7 @@ public class StubJarTest {
 
     public Tester addExpectedStub(String classBinaryName, String... stubLines) {
       String filePath = classBinaryName + ".class";
-      expectedDirectory.add(filePath);
+      expectedStubDirectory.add(filePath);
       expectedStubs.put(filePath, Arrays.asList(stubLines));
       return this;
     }
@@ -2937,7 +3360,7 @@ public class StubJarTest {
         compileFullJar();
         dumpFullJarAbi();
 
-        for (String entryName : expectedDirectory) {
+        for (String entryName : expectedStubDirectory) {
           if (!expectedFullAbis.containsKey(entryName)) {
             // You don't have to put expectations for all full ABIs, only those that you feel really
             // need to be a certain way for the test to be valid.
@@ -2957,9 +3380,12 @@ public class StubJarTest {
     public Tester checkStubJar() throws IOException {
       dumpStubJar();
 
-      assertEquals("File list is not correct.", expectedDirectory, actualDirectory);
+      assertEquals("File list is not correct.", expectedStubDirectory, actualStubDirectory);
 
-      for (String entryName : expectedDirectory) {
+      for (String entryName : expectedStubDirectory) {
+        if (entryName.endsWith("/")) {
+          continue;
+        }
         assertEquals(
             "Stub for " + entryName + " is not correct",
             Joiner.on('\n').join(expectedStubs.get(entryName)),
@@ -2997,12 +3423,14 @@ public class StubJarTest {
     public Tester addStubJarToClasspath() throws IOException {
       classpath =
           ImmutableSortedSet.<Path>naturalOrder().addAll(classpath).add(stubJarPath).build();
+      resetActuals();
       return this;
     }
 
     public Tester addFullJarToClasspath() throws IOException {
       classpath =
           ImmutableSortedSet.<Path>naturalOrder().addAll(classpath).add(fullJarPath).build();
+      resetActuals();
       return this;
     }
 
@@ -3074,7 +3502,10 @@ public class StubJarTest {
         result.append(sourceLine.replace("\"", "\\\""));
       }
       result.append("\")\n");
-      for (String fileName : actualDirectory) {
+      for (String fileName : actualFullDirectory) {
+        if (fileName.endsWith("/") || fileName.equals(JarFile.MANIFEST_NAME)) {
+          continue;
+        }
         if (includeFullAbi) {
           result.append("        .addExpectedFullAbi(\n");
           result.append(indent);
@@ -3090,18 +3521,20 @@ public class StubJarTest {
           result.append("\")\n");
         }
 
-        result.append("        .addExpectedStub(\n");
-        result.append(indent);
-        result.append('"');
-        result.append(fileName.substring(0, fileName.length() - ".class".length()));
-
-        for (String stubLine : actualStubs.get(fileName)) {
-          result.append("\",\n");
+        if (actualStubs.containsKey(fileName)) {
+          result.append("        .addExpectedStub(\n");
           result.append(indent);
           result.append('"');
-          result.append(stubLine.replace("\"", "\\\""));
+          result.append(fileName.substring(0, fileName.length() - ".class".length()));
+
+          for (String stubLine : actualStubs.get(fileName)) {
+            result.append("\",\n");
+            result.append(indent);
+            result.append('"');
+            result.append(stubLine.replace("\"", "\\\""));
+          }
+          result.append("\")\n");
         }
-        result.append("\")\n");
       }
       result.append("        .createAndCheckStubJar();\n");
 
@@ -3117,7 +3550,7 @@ public class StubJarTest {
           if (JarFile.MANIFEST_NAME.equals(name)) {
             continue;
           }
-          actualDirectory.add(name);
+          actualStubDirectory.add(name);
           actualStubs.put(
               name, new JarDumper().dumpEntry(file, entry).collect(Collectors.toList()));
         }
@@ -3132,6 +3565,7 @@ public class StubJarTest {
           if (JarFile.MANIFEST_NAME.equals(name)) {
             continue;
           }
+          actualFullDirectory.add(name);
           actualFullAbis.put(
               name,
               new JarDumper()

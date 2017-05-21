@@ -14,25 +14,20 @@
  * under the License.
  */
 
-package com.facebook.buck.jvm.java;
+package com.facebook.buck.zip;
 
 import static com.facebook.buck.zip.ZipOutputStreams.HandleDuplicates.APPEND_TO_ZIP;
 
-import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.util.HumanReadableException;
-import com.facebook.buck.zip.CustomJarOutputStream;
-import com.facebook.buck.zip.CustomZipEntry;
-import com.facebook.buck.zip.DeterministicManifest;
-import com.facebook.buck.zip.ZipOutputStreams;
+import com.facebook.buck.util.RichStream;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +36,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 public class JarBuilder {
@@ -61,8 +57,6 @@ public class JarBuilder {
     void onEntryOmitted(String jarFile, JarEntrySupplier entrySupplier) throws IOException;
   }
 
-  private final ProjectFilesystem filesystem;
-
   private Observer observer = Observer.IGNORING;
   @Nullable private Path outputFile;
   @Nullable private CustomJarOutputStream jar;
@@ -74,24 +68,26 @@ public class JarBuilder {
   private List<JarEntryContainer> sourceContainers = new ArrayList<>();
   private Set<String> alreadyAddedEntries = new HashSet<>();
 
-  public JarBuilder(ProjectFilesystem filesystem) {
-    this.filesystem = filesystem;
-  }
-
   public JarBuilder setObserver(Observer observer) {
     this.observer = observer;
     return this;
   }
 
-  public JarBuilder setEntriesToJar(ImmutableSortedSet<Path> entriesToJar) {
-    sourceContainers.clear();
+  public JarBuilder setEntriesToJar(Stream<Path> entriesToJar) {
+    return setEntriesToJar(entriesToJar::iterator);
+  }
 
-    entriesToJar
-        .stream()
-        .map(filesystem::getPathForRelativePath)
+  public JarBuilder setEntriesToJar(Iterable<Path> entriesToJar) {
+    RichStream.from(entriesToJar)
+        .peek(path -> Preconditions.checkArgument(path.isAbsolute()))
         .map(JarEntryContainer::of)
         .forEach(sourceContainers::add);
 
+    return this;
+  }
+
+  public JarBuilder addEntry(JarEntrySupplier supplier) {
+    sourceContainers.add(new SingletonJarEntryContainer(supplier));
     return this;
   }
 
@@ -100,17 +96,13 @@ public class JarBuilder {
     return this;
   }
 
-  public JarBuilder setAlreadyAddedEntries(ImmutableSet<String> alreadyAddedEntries) {
-    alreadyAddedEntries.forEach(this.alreadyAddedEntries::add);
-    return this;
-  }
-
   public JarBuilder setMainClass(String mainClass) {
     this.mainClass = mainClass;
     return this;
   }
 
-  public JarBuilder setManifestFile(Path manifestFile) {
+  public JarBuilder setManifestFile(@Nullable Path manifestFile) {
+    Preconditions.checkArgument(manifestFile == null || manifestFile.isAbsolute());
     this.manifestFile = manifestFile;
     return this;
   }
@@ -135,31 +127,32 @@ public class JarBuilder {
     try (CustomJarOutputStream jar =
         ZipOutputStreams.newJarOutputStream(outputFile, APPEND_TO_ZIP)) {
       jar.setEntryHashingEnabled(shouldHashEntries);
-      return appendToJarFile(outputFile, jar);
+      this.outputFile = outputFile;
+      this.jar = jar;
+
+      // Write the manifest first.
+      writeManifest();
+
+      // Sort entries across all suppliers
+      List<JarEntrySupplier> sortedEntries = new ArrayList<>();
+      for (JarEntryContainer sourceContainer : sourceContainers) {
+        sourceContainer.stream().forEach(sortedEntries::add);
+      }
+      sortedEntries.sort(Comparator.comparing(supplier -> supplier.getEntry().getName()));
+
+      addEntriesToJar(sortedEntries);
+
+      if (mainClass != null && !mainClassPresent()) {
+        throw new HumanReadableException("ERROR: Main class %s does not exist.", mainClass);
+      }
+
+      return 0;
     }
-  }
-
-  public int appendToJarFile(Path outputFile, CustomJarOutputStream jar) throws IOException {
-    Preconditions.checkArgument(outputFile.isAbsolute());
-    this.outputFile = outputFile;
-    this.jar = jar;
-
-    // Write the manifest first.
-    writeManifest();
-
-    for (JarEntryContainer sourceContainer : sourceContainers) {
-      addEntriesToJar(sourceContainer);
-    }
-
-    if (mainClass != null && !mainClassPresent()) {
-      throw new HumanReadableException("ERROR: Main class %s does not exist.", mainClass);
-    }
-
-    return 0;
   }
 
   private void writeManifest() throws IOException {
-    DeterministicManifest manifest = jar.getManifest();
+    mkdirs("META-INF/");
+    DeterministicManifest manifest = Preconditions.checkNotNull(jar).getManifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
     if (shouldMergeManifests) {
@@ -174,8 +167,7 @@ public class JarBuilder {
     // Even if not merging manifests, we should include the one the user gave us. We do this last
     // so that values from the user overwrite values from merged manifests.
     if (manifestFile != null) {
-      Path path = filesystem.getPathForRelativePath(manifestFile);
-      try (InputStream stream = Files.newInputStream(path)) {
+      try (InputStream stream = Files.newInputStream(manifestFile)) {
         Manifest readManifest = new Manifest(stream);
         merge(manifest, readManifest);
       }
@@ -186,11 +178,11 @@ public class JarBuilder {
       manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
     }
 
-    jar.writeManifest();
+    Preconditions.checkNotNull(jar).writeManifest();
   }
 
   private boolean mainClassPresent() {
-    String mainClassPath = classNameToPath(mainClass);
+    String mainClassPath = classNameToPath(Preconditions.checkNotNull(mainClass));
 
     return alreadyAddedEntries.contains(mainClassPath);
   }
@@ -207,8 +199,7 @@ public class JarBuilder {
     return entry;
   }
 
-  private void addEntriesToJar(JarEntryContainer container) throws IOException {
-    Iterable<JarEntrySupplier> entries = container.stream()::iterator;
+  private void addEntriesToJar(Iterable<JarEntrySupplier> entries) throws IOException {
     for (JarEntrySupplier entrySupplier : entries) {
       addEntryToJar(entrySupplier);
     }
@@ -228,6 +219,8 @@ public class JarBuilder {
       return;
     }
 
+    mkdirs(getParentDir(entryName));
+
     // We're in the process of merging a bunch of different jar files. These typically contain
     // just ".class" files and the manifest, but they can also include things like license files
     // from third party libraries and config files. We should include those license files within
@@ -241,14 +234,40 @@ public class JarBuilder {
       return;
     }
 
-    jar.putNextEntry(entry);
+    Preconditions.checkNotNull(jar).putNextEntry(entry);
     try (InputStream entryInputStream = entrySupplier.getInputStreamSupplier().get()) {
       if (entryInputStream != null) {
         // Null stream means a directory
-        ByteStreams.copy(entryInputStream, jar);
+        ByteStreams.copy(entryInputStream, Preconditions.checkNotNull(jar));
       }
     }
-    jar.closeEntry();
+    Preconditions.checkNotNull(jar).closeEntry();
+  }
+
+  private void mkdirs(String name) throws IOException {
+    if (name.isEmpty()) {
+      return;
+    }
+
+    Preconditions.checkArgument(name.endsWith("/"));
+    if (alreadyAddedEntries.contains(name)) {
+      return;
+    }
+
+    String parent = getParentDir(name);
+    mkdirs(parent);
+
+    Preconditions.checkNotNull(jar).putNextEntry(new CustomZipEntry(name));
+    Preconditions.checkNotNull(jar).closeEntry();
+    alreadyAddedEntries.add(name);
+  }
+
+  private String getParentDir(String name) {
+    int length = name.lastIndexOf('/') + 1;
+    if (length == name.length()) {
+      length = name.lastIndexOf('/', length - 2) + 1;
+    }
+    return name.substring(0, length);
   }
 
   private boolean shouldEntryBeRemovedFromJar(JarEntrySupplier supplier) throws IOException {
@@ -293,5 +312,34 @@ public class JarBuilder {
 
   private boolean isDuplicateAllowed(String name) {
     return !name.endsWith(".class") && !name.endsWith("/");
+  }
+
+  private static class SingletonJarEntryContainer implements JarEntryContainer {
+    private final JarEntrySupplier supplier;
+
+    @Nullable private Manifest manifest;
+
+    private SingletonJarEntryContainer(JarEntrySupplier supplier) {
+      this.supplier = supplier;
+    }
+
+    @Nullable
+    @Override
+    public Manifest getManifest() throws IOException {
+      if (manifest == null && supplier.getEntry().getName().equals(JarFile.MANIFEST_NAME)) {
+        try (InputStream manifestStream = supplier.getInputStreamSupplier().get()) {
+          manifest = new Manifest(manifestStream);
+        }
+      }
+      return manifest;
+    }
+
+    @Override
+    public Stream<JarEntrySupplier> stream() throws IOException {
+      return Stream.of(supplier);
+    }
+
+    @Override
+    public void close() {}
   }
 }

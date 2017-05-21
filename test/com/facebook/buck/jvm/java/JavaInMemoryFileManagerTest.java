@@ -21,8 +21,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.facebook.buck.testutil.TestCustomZipOutputStream;
+import com.facebook.buck.testutil.TestJar;
+import com.facebook.buck.zip.JarBuilder;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -30,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import javax.tools.DiagnosticCollector;
@@ -38,10 +41,14 @@ import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Tests {@link JavaInMemoryFileManager} */
 public class JavaInMemoryFileManagerTest {
+
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   private JavaInMemoryFileManager inMemoryFileManager;
 
@@ -78,10 +85,10 @@ public class JavaInMemoryFileManagerTest {
     stream.write("Hello World!".getBytes());
     stream.close();
 
-    TestCustomZipOutputStream outputStream = writeToJar();
-    List<String> entries = outputStream.getEntriesContent();
-    assertEquals(1, entries.size());
-    assertEquals("Hello World!", entries.get(0));
+    TestJar jar = writeToJar();
+    List<String> entries = jar.getEntriesContent();
+    assertEquals(3, entries.size());
+    assertEquals("Hello World!", entries.get(2));
   }
 
   @Test
@@ -106,14 +113,21 @@ public class JavaInMemoryFileManagerTest {
             StandardLocation.CLASS_OUTPUT, "B$D", JavaFileObject.Kind.CLASS, null);
     fileObject.openOutputStream().close();
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     assertThat(
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
-        Matchers.contains("A.class", "B$D.class", "B.class", "B/C.class"));
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
+        Matchers.contains(
+            "META-INF/",
+            JarFile.MANIFEST_NAME,
+            "A.class",
+            "B$D.class",
+            "B.class",
+            "B/",
+            "B/C.class"));
   }
 
   @Test
-  public void testIntermediateDirectoriesAreNotCreated() throws Exception {
+  public void testIntermediateDirectoriesAreCreated() throws Exception {
     JavaFileObject fileObject =
         inMemoryFileManager.getJavaFileForOutput(
             StandardLocation.CLASS_OUTPUT,
@@ -123,10 +137,17 @@ public class JavaInMemoryFileManagerTest {
 
     fileObject.openOutputStream().close();
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     List<String> zipEntries =
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList());
-    assertThat(zipEntries, Matchers.contains("jvm/java/JavaFileParser.class"));
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList());
+    assertThat(
+        zipEntries,
+        Matchers.contains(
+            "META-INF/",
+            JarFile.MANIFEST_NAME,
+            "jvm/",
+            "jvm/java/",
+            "jvm/java/JavaFileParser.class"));
   }
 
   @Test
@@ -148,13 +169,18 @@ public class JavaInMemoryFileManagerTest {
     fileObject1.openOutputStream().close();
     fileObject2.openOutputStream().close();
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     List<String> zipEntries =
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList());
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList());
     assertThat(
         zipEntries,
         Matchers.contains(
-            "jvm/java/JavaFileParser.class", "jvm/java/JavaInMemoryFileManager.class"));
+            "META-INF/",
+            JarFile.MANIFEST_NAME,
+            "jvm/",
+            "jvm/java/",
+            "jvm/java/JavaFileParser.class",
+            "jvm/java/JavaInMemoryFileManager.class"));
   }
 
   @Test
@@ -263,10 +289,10 @@ public class JavaInMemoryFileManagerTest {
     inMemoryFileManager.getFileForOutput(
         StandardLocation.CLASS_OUTPUT, "jvm.java", "JavaFileParser", null);
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     assertThat(
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
-        Matchers.empty());
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
+        Matchers.contains("META-INF/", JarFile.MANIFEST_NAME));
   }
 
   @Test
@@ -274,10 +300,10 @@ public class JavaInMemoryFileManagerTest {
     inMemoryFileManager.getJavaFileForOutput(
         StandardLocation.CLASS_OUTPUT, "jvm.java.JavaFileParser", JavaFileObject.Kind.OTHER, null);
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     assertThat(
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
-        Matchers.empty());
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
+        Matchers.contains("META-INF/", JarFile.MANIFEST_NAME));
   }
 
   @Test
@@ -291,15 +317,17 @@ public class JavaInMemoryFileManagerTest {
 
     fileObject.openOutputStream().write("Hello".getBytes());
 
-    TestCustomZipOutputStream outputStream = writeToJar();
+    TestJar jar = writeToJar();
     assertThat(
-        outputStream.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
-        Matchers.empty());
+        jar.getZipEntries().stream().map(ZipEntry::getName).collect(Collectors.toList()),
+        Matchers.contains("META-INF/", JarFile.MANIFEST_NAME));
   }
 
-  private TestCustomZipOutputStream writeToJar() throws IOException {
-    TestCustomZipOutputStream os = new TestCustomZipOutputStream();
-    inMemoryFileManager.writeToJar(os);
-    return os;
+  private TestJar writeToJar() throws IOException {
+    File jarFile = temp.newFile();
+    JarBuilder jarBuilder = new JarBuilder();
+    inMemoryFileManager.writeToJar(jarBuilder);
+    jarBuilder.createJarFile(jarFile.toPath());
+    return new TestJar(jarFile);
   }
 }

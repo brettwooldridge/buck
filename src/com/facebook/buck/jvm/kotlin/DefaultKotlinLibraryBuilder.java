@@ -23,6 +23,8 @@ import com.facebook.buck.jvm.java.JavaLibraryDescription;
 import com.facebook.buck.parser.NoSuchBuildTargetException;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
+import com.facebook.buck.rules.CellPathResolver;
+import com.facebook.buck.rules.TargetGraph;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -32,10 +34,12 @@ public class DefaultKotlinLibraryBuilder extends DefaultJavaLibraryBuilder {
   private ImmutableList<String> extraKotlincArguments = ImmutableList.of();
 
   public DefaultKotlinLibraryBuilder(
+      TargetGraph targetGraph,
       BuildRuleParams params,
       BuildRuleResolver buildRuleResolver,
+      CellPathResolver cellRoots,
       KotlinBuckConfig kotlinBuckConfig) {
-    super(params, buildRuleResolver);
+    super(targetGraph, params, buildRuleResolver, cellRoots);
     this.kotlinBuckConfig = kotlinBuckConfig;
   }
 

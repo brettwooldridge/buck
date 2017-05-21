@@ -17,7 +17,6 @@
 package com.facebook.buck.android;
 
 import com.facebook.buck.io.ProjectFilesystem;
-import com.facebook.buck.jvm.java.JarBuilder;
 import com.facebook.buck.jvm.java.JavacEventSinkToBuckEventBusBridge;
 import com.facebook.buck.jvm.java.LoggingJarBuilderObserver;
 import com.facebook.buck.model.BuildTarget;
@@ -40,6 +39,7 @@ import com.facebook.buck.step.fs.CopyStep;
 import com.facebook.buck.step.fs.MakeCleanDirectoryStep;
 import com.facebook.buck.step.fs.MkdirStep;
 import com.facebook.buck.step.fs.TouchStep;
+import com.facebook.buck.zip.JarBuilder;
 import com.facebook.buck.zip.UnzipStep;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -125,7 +125,7 @@ public class UnzipAar extends AbstractBuildRule
                 new JavacEventSinkToBuckEventBusBridge(context.getBuckEventBus());
             if (!filesystem.exists(classesJar)) {
               try {
-                new JarBuilder(filesystem)
+                new JarBuilder()
                     .setObserver(new LoggingJarBuilderObserver(eventSink))
                     .createJarFile(filesystem.resolve(classesJar));
               } catch (IOException e) {
@@ -157,9 +157,9 @@ public class UnzipAar extends AbstractBuildRule
               ImmutableSortedSet<Path> entriesToJar = entriesToJarBuilder.build();
               try {
 
-                new JarBuilder(filesystem)
+                new JarBuilder()
                     .setObserver(new LoggingJarBuilderObserver(eventSink))
-                    .setEntriesToJar(entriesToJar)
+                    .setEntriesToJar(entriesToJar.stream().map(filesystem::resolve))
                     .setMainClass(Optional.<String>empty().orElse(null))
                     .setManifestFile(Optional.<Path>empty().orElse(null))
                     .setShouldMergeManifests(true)

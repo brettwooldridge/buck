@@ -20,6 +20,7 @@ import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.step.Step;
 import com.facebook.buck.step.StepExecutionResult;
+import com.facebook.buck.zip.JarBuilder;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -152,11 +153,11 @@ public class JarDirectoryStep implements Step {
     JavacEventSinkToBuckEventBusBridge eventSink =
         new JavacEventSinkToBuckEventBusBridge(context.getBuckEventBus());
     return StepExecutionResult.of(
-        new JarBuilder(filesystem)
+        new JarBuilder()
             .setObserver(new LoggingJarBuilderObserver(eventSink))
-            .setEntriesToJar(entriesToJar)
+            .setEntriesToJar(entriesToJar.stream().map(filesystem::resolve))
             .setMainClass(Optional.ofNullable(mainClass).orElse(null))
-            .setManifestFile(Optional.ofNullable(manifestFile).orElse(null))
+            .setManifestFile(manifestFile != null ? filesystem.resolve(manifestFile) : null)
             .setShouldMergeManifests(mergeManifests)
             .setShouldHashEntries(hashEntries)
             .setEntryPatternBlacklist(blacklist)
