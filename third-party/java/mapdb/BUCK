@@ -11,7 +11,6 @@ java_library(
         "//third-party/java/eclipse-collections:eclipse-collections",
         "//third-party/java/guava:guava",
         "//third-party/java/jcip-annotations:jcip-annotations",
-        "//third-party/java/kotlin:kotlin",
         "//third-party/java/lz4:lz4",
     ],
 )
