@@ -18,7 +18,7 @@
   <property name="aosp.classes.dir.name" value="aosp/classes" />
   <property name="aosp.classes.dir" value="${build.dir}/${aosp.classes.dir.name}" />
   <property name="testrunner.classes.dir" value="${build.dir}/testrunner/classes" />
-  <property name="bootstrapper.src.dir" value="com/facebook/buck/cli/bootstrapper/" />
+  <property name="bootstrapper.src.dir" value="com/facebook/buck/cli/bootstrapper" />
   <property name="bootstrapper.classes.dir.name" value="bootstrapper/classes" />
   <property name="bootstrapper.classes.dir" value="${build.dir}/${bootstrapper.classes.dir.name}" />
   <property name="bootstrapper.jar" value="${build.dir}/bootstrapper/bootstrapper.jar" />
@@ -50,8 +50,8 @@
 
   <property name="eclipse.dir" value="${basedir}/third-party/java/eclipse" />
 
-  <property name="immutables-builder-standalone.jar" value="${third-party.dir}/java/immutables/builder-2.5.7-SNAPSHOT.jar" />
-  <property name="immutables-value-standalone.jar" value="${third-party.dir}/java/immutables/value-2.5.7-SNAPSHOT.jar" />
+  <property name="immutables-builder-standalone.jar" value="${third-party.dir}/java/immutables/builder-2.7.4-SNAPSHOT.jar" />
+  <property name="immutables-value-standalone.jar" value="${third-party.dir}/java/immutables/value-2.7.4-SNAPSHOT.jar" />
   <property name="pf4j-standalone.jar" value="${third-party.dir}/java/pf4j/pf4j-2.0.0-SNAPSHOT.jar" />
   <property name="pf4j-annotation-processor-storage-config" value="-Apf4j.storageClassName=org.pf4j.processor.ServiceProviderExtensionStorage" />
 
@@ -81,7 +81,7 @@
   <property name="modules.resources.dir.name" value="buck-modules-resources" />
 
   <property name="ecj.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter" />
-  <property name="ecj.compiler.path" value="${eclipse.dir}/ecj-4.8.jar" />
+  <property name="ecj.compiler.path" value="${eclipse.dir}/ecj-3.15.1.jar" />
   <property name="error.prone.compiler" value="com.google.errorprone.ErrorProneAntCompilerAdapter" />
   <property name="error.prone.compiler.path" value="${third-party.dir}/java/errorprone/error_prone_ant-2.2.0.jar" />
   <!-- Control whether ErrorProne compiler is enabled. Disabled by default. -->
@@ -93,19 +93,8 @@
     else="${ecj.compiler.path}">
     <istrue value="${error.prone}" />
   </condition>
-  <condition property="jdk10_or_higher">
+  <condition property="jdk11_or_higher">
     <hasmethod classname="java.util.List" method="copyOf"/>
-  </condition>
-
-  <!-- Javadoc in 1.8 became stricter about parsing the docs. This disables some of those checks -->
-  <available property="jdk8_or_higher" classname="java.util.stream.Stream"/>
-  <condition
-          property="javadoc.doclint"
-          value="-Xdoclint:-reference"
-          else="">
-    <and>
-      <isset property="jdk8_or_higher"/>
-    </and>
   </condition>
 
   <fileset dir="${third-party.dir}/java" id="buck.jars">
@@ -172,8 +161,8 @@
     <include name="guice/guice-assistedinject-3.0.jar" />
     <include name="guice/guice-multibindings-3.0.jar" />
     <include name="icu4j/icu4j-54.1.1.jar" />
-    <include name="immutables/builder-2.5.7-SNAPSHOT.jar" />
-    <include name="immutables/value-2.5.7-SNAPSHOT.jar" />
+    <include name="immutables/builder-2.7.4-SNAPSHOT.jar" />
+    <include name="immutables/value-2.7.4-SNAPSHOT.jar" />
     <include name="infer-annotations/infer-annotations-4.2.jar" />
     <include name="jacoco/org.jacoco.core-0.8.2.jar" />
     <include name="jacoco/org.jacoco.report-0.8.2.jar" />
@@ -399,9 +388,9 @@
         <include name="com/facebook/buck/jvm/java/abi/source/java8/*.java" />
         <include name="com/facebook/buck/jvm/java/abi/source/java10/*.java" />
         <include name="com/facebook/buck/jvm/java/plugin/adapter/**/*.java" />
-        <!-- Conditional compilation so we can simultaneously build against Java 8 and 10. -->
-        <exclude name="com/facebook/buck/**/java8/*.java" if="jdk10_or_higher"/>
-        <exclude name="com/facebook/buck/**/java10/*.java" unless="jdk10_or_higher"/>
+        <!-- Conditional compilation so we can simultaneously build against Java 8 and 11. -->
+        <exclude name="com/facebook/buck/**/java8/*.java" if="jdk11_or_higher"/>
+        <exclude name="com/facebook/buck/**/java11/*.java" unless="jdk11_or_higher"/>
       </javac-params>
     </compiler>
     <jar destfile="${javac-plugin.jar}">
@@ -515,6 +504,8 @@
         <compilerarg value="-processorpath" />
         <compilerarg value="${processorpath}" />
         <compilerarg value="${pf4j-annotation-processor-storage-config}" />
+        <compilerarg value="-XprintProcessorInfo" />
+        <compilerarg value="-XprintRounds" />
         <patternset>
           <!--
             These patterns are excluded because they are compiled elsewhere
@@ -529,9 +520,9 @@
           <exclude name="com/facebook/buck/jvm/java/plugin/adapter/**" />
           <exclude name="com/facebook/buck/testrunner/**" />
 
-          <!-- Conditional compilation so we can simultaneously build against Java 8 and 10. -->
-          <exclude name="com/facebook/buck/jvm/java/abi/java8/**" if="jdk10_or_higher"/>
-          <exclude name="com/facebook/buck/jvm/java/abi/java10/**" unless="jdk10_or_higher"/>
+          <!-- Conditional compilation so we can simultaneously build against Java 8 and 11. -->
+          <exclude name="com/facebook/buck/jvm/java/abi/java8/**" if="jdk11_or_higher"/>
+          <exclude name="com/facebook/buck/jvm/java/abi/java11/**" unless="jdk11_or_higher"/>
         </patternset>
       </javac-params>
     </compiler>
@@ -1018,7 +1009,7 @@
         gensrcdir="@{module-gen-dir}">
         <javac-params>
           <compilerarg value="-processorpath" />
-          <compilerarg value="${module.processorpath}" /> 
+          <compilerarg value="${module.processorpath}" />
           <compilerarg value="${pf4j-annotation-processor-storage-config}" />
           <module-javac-params/>
         </javac-params>
@@ -1081,9 +1072,9 @@
         <fileset dir="${src.dir}">
           <include name="**/*.java" />
           <exclude name="com/facebook/buck/android/support/exopackage/**" />
-          <!-- Conditional compilation so we can simultaneously build against Java 8 and 10. -->
-          <exclude name="com/facebook/buck/**/java8/*.java" if="jdk10_or_higher"/>
-          <exclude name="com/facebook/buck/**/java10/*.java" unless="jdk10_or_higher"/>
+          <!-- Conditional compilation so we can simultaneously build against Java 8 and 11. -->
+          <exclude name="com/facebook/buck/**/java8/*.java" if="jdk11_or_higher"/>
+          <exclude name="com/facebook/buck/**/java11/*.java" unless="jdk11_or_higher"/>
         </fileset>
         <fileset dir="${gensrc.dir}" />
         <fileset dir="${buck.modules.classes.dir}/gen/" />

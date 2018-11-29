@@ -5,10 +5,10 @@ License: Apache 2.0
 The jars were built using the following actions:
 
 git clone git@github.com:immutables/immutables.git
-git checkout b61c6517b8cbed79770c96c6e508c6ef055c6734
+git checkout a24a29d7fab97a8ec37dd43da429e38bc8b5d108
 mvn package source:jar
-cp ./builder/target/builder-2.5.7-SNAPSHOT-sources.jar \
-   ./builder/target/builder-2.5.7-SNAPSHOT.jar \
-   ./value/target/value-2.5.7-SNAPSHOT.jar \
-   ./value/target/value-2.5.7-SNAPSHOT-sources.jar \
+cp ./builder/target/builder-2.7.4-SNAPSHOT-sources.jar \
+   ./builder/target/builder-2.7.4-SNAPSHOT.jar \
+   ./value/target/value-2.7.4-SNAPSHOT.jar \
+   ./value/target/value-2.7.4-SNAPSHOT-sources.jar \
    <buck-repository-location>/third-party/java/immutables

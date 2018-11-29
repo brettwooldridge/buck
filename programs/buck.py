@@ -170,7 +170,7 @@ def main(argv, reporter):
     java_version_status_queue = Queue(maxsize=1)
     required_java_version = "8"
 
-    java10_test_mode_arg = "--java10-test-mode"
+    java10_test_mode_arg = "--java11-test-mode"
     java10_test_mode = java10_test_mode_arg in argv
     if java10_test_mode:
         argv.remove(java10_test_mode_arg)
