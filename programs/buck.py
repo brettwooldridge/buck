@@ -174,7 +174,7 @@ def main(argv, reporter):
     java10_test_mode = java10_test_mode_arg in argv
     if java10_test_mode:
         argv.remove(java10_test_mode_arg)
-        required_java_version = "10"
+        required_java_version = "11"
 
     _try_to_verify_java_version_off_thread(
         java_version_status_queue, required_java_version
